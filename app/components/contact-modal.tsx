@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { X, Send, CheckCircle } from "lucide-react"
+import { sendQuoteRequest } from "../actions/send-email"
 
 interface ContactModalProps {
   isOpen: boolean
@@ -12,21 +12,11 @@ interface ContactModalProps {
 }
 
 export default function ContactModal({ isOpen, onClose, preSelectedProduct = null }: ContactModalProps) {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    company: "",
-    phone: "",
-    selectedProducts: preSelectedProduct ? [preSelectedProduct] : [],
-    customProducts: "",
-    totalQuantity: "",
-    deliveryLocation: "",
-    timeline: "",
-    message: "",
-  })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState("")
   const [showProductSelector, setShowProductSelector] = useState(false)
+  const [selectedProducts, setSelectedProducts] = useState(preSelectedProduct ? [preSelectedProduct] : [])
 
   const availableProducts = [
     { id: "olive-oil", name: "Extra Virgin Olive Oil", category: "oils", price: "€8.50-12.00/L" },
@@ -53,46 +43,46 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
     { id: "almonds", name: "Fresh Almonds", category: "nuts", price: "€6.00-8.50/kg" },
   ]
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-
   const handleProductToggle = (product: any) => {
-    const isSelected = formData.selectedProducts.some((p) => p.id === product.id)
+    const isSelected = selectedProducts.some((p) => p.id === product.id)
     if (isSelected) {
-      setFormData({
-        ...formData,
-        selectedProducts: formData.selectedProducts.filter((p) => p.id !== product.id),
-      })
+      setSelectedProducts(selectedProducts.filter((p) => p.id !== product.id))
     } else {
-      setFormData({
-        ...formData,
-        selectedProducts: [...formData.selectedProducts, product],
-      })
+      setSelectedProducts([...selectedProducts, product])
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSubmitting(true)
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setSubmitted(true)
-    setSubmitting(false)
+
+    try {
+      const formData = new FormData(e.currentTarget)
+
+      // Add selected products to form data
+      const selectedProductsString = selectedProducts.map((p) => p.name).join(", ")
+      formData.append("selectedProducts", selectedProductsString)
+
+      const result = await sendQuoteRequest(formData)
+
+      if (result.success) {
+        setSubmitted(true)
+        setSubmitMessage(result.message)
+      }
+    } catch (error) {
+      console.error("Error sending quote request:", error)
+      setSubmitMessage(
+        "There was an error sending your quote request. Please try again or contact us directly at euronegoce.mail@gmail.com",
+      )
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const resetForm = () => {
-    setFormData({
-      name: "",
-      email: "",
-      company: "",
-      phone: "",
-      selectedProducts: [],
-      customProducts: "",
-      totalQuantity: "",
-      deliveryLocation: "",
-      timeline: "",
-      message: "",
-    })
+    setSelectedProducts([])
     setSubmitted(false)
+    setSubmitMessage("")
   }
 
   if (!isOpen) return null
@@ -123,8 +113,12 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                 <CheckCircle size={32} className="text-green-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-800 mb-2">Quote Request Sent!</h3>
-              <p className="text-gray-600 mb-6">
-                Thank you for your interest. Our team will contact you within 24 hours with a personalized quote.
+              <p className="text-gray-600 mb-6">{submitMessage}</p>
+              <p className="text-sm text-gray-500 mb-6">
+                You can also reach us directly at: <br />
+                <a href="mailto:euronegoce.mail@gmail.com" className="text-green-600 hover:underline">
+                  euronegoce.mail@gmail.com
+                </a>
               </p>
               <div className="flex gap-4 justify-center">
                 <button
@@ -155,8 +149,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                       type="text"
                       id="name"
                       name="name"
-                      value={formData.name}
-                      onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       placeholder="Your full name"
                       required
@@ -171,8 +163,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                       type="email"
                       id="email"
                       name="email"
-                      value={formData.email}
-                      onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       placeholder="your.email@company.com"
                       required
@@ -187,8 +177,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                       type="text"
                       id="company"
                       name="company"
-                      value={formData.company}
-                      onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       placeholder="Your company name"
                       required
@@ -203,8 +191,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                       type="tel"
                       id="phone"
                       name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       placeholder="+1 (555) 123-4567"
                     />
@@ -217,11 +203,11 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Product Selection</h3>
 
                 {/* Selected Products Display */}
-                {formData.selectedProducts.length > 0 && (
+                {selectedProducts.length > 0 && (
                   <div className="mb-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Products:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {formData.selectedProducts.map((product) => (
+                      {selectedProducts.map((product) => (
                         <span
                           key={product.id}
                           className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
@@ -253,7 +239,7 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                   <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
                       {availableProducts.map((product) => {
-                        const isSelected = formData.selectedProducts.some((p) => p.id === product.id)
+                        const isSelected = selectedProducts.some((p) => p.id === product.id)
                         return (
                           <div
                             key={product.id}
@@ -293,8 +279,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                     type="text"
                     id="customProducts"
                     name="customProducts"
-                    value={formData.customProducts}
-                    onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     placeholder="e.g., Organic Apples, Sunflower Oil, etc."
                   />
@@ -313,8 +297,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                       type="text"
                       id="totalQuantity"
                       name="totalQuantity"
-                      value={formData.totalQuantity}
-                      onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       placeholder="e.g., 10 tons, 500 cases, 1000kg"
                       required
@@ -329,8 +311,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                       type="text"
                       id="deliveryLocation"
                       name="deliveryLocation"
-                      value={formData.deliveryLocation}
-                      onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       placeholder="City, Country"
                       required
@@ -344,8 +324,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                     <select
                       id="timeline"
                       name="timeline"
-                      value={formData.timeline}
-                      onChange={handleChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     >
                       <option value="">Select timeline</option>
@@ -365,8 +343,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                 <textarea
                   id="message"
                   name="message"
-                  value={formData.message}
-                  onChange={handleChange}
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
                   placeholder="Please describe your specific requirements, quality standards, packaging preferences, certifications needed, or any other details..."
@@ -391,6 +367,13 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                   </>
                 )}
               </button>
+
+              <p className="text-xs text-gray-500 text-center">
+                All quote requests are sent to{" "}
+                <a href="mailto:euronegoce.mail@gmail.com" className="text-green-600 hover:underline">
+                  euronegoce.mail@gmail.com
+                </a>
+              </p>
             </form>
           )}
         </div>

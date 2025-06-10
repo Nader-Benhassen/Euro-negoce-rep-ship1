@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { X, Send, CheckCircle } from "lucide-react"
+import { sendContactEmail } from "../actions/send-email"
 
 interface ContactFormModalProps {
   isOpen: boolean
@@ -12,73 +12,43 @@ interface ContactFormModalProps {
 }
 
 export default function ContactFormModal({ isOpen, onClose, selectedProduct }: ContactFormModalProps) {
-  const [formState, setFormState] = useState({
-    name: "",
-    email: "",
-    company: "",
-    phone: "",
-    message: selectedProduct ? `I'm interested in ${selectedProduct}. Please provide more information.` : "",
-  })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [submitMessage, setSubmitMessage] = useState("")
 
   if (!isOpen) return null
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormState((prev) => ({ ...prev, [name]: value }))
-
-    // Clear error when field is edited
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[name]
-        return newErrors
-      })
-    }
-  }
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formState.name.trim()) newErrors.name = "Name is required"
-    if (!formState.email.trim()) {
-      newErrors.email = "Email is required"
-    } else if (!/^\S+@\S+\.\S+$/.test(formState.email)) {
-      newErrors.email = "Please enter a valid email address"
-    }
-    if (!formState.message.trim()) newErrors.message = "Message is required"
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-
-    if (!validateForm()) return
-
     setIsSubmitting(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
-      setIsSubmitted(true)
+    try {
+      const formData = new FormData(e.currentTarget)
+      if (selectedProduct) {
+        formData.append("selectedProduct", selectedProduct)
+      }
 
-      // Reset form after 3 seconds
-      setTimeout(() => {
-        onClose()
-        setIsSubmitted(false)
-        setFormState({
-          name: "",
-          email: "",
-          company: "",
-          phone: "",
-          message: "",
-        })
-      }, 3000)
-    }, 1500)
+      const result = await sendContactEmail(formData)
+
+      if (result.success) {
+        setIsSubmitted(true)
+        setSubmitMessage(result.message)
+
+        // Reset form and close modal after 3 seconds
+        setTimeout(() => {
+          onClose()
+          setIsSubmitted(false)
+          setSubmitMessage("")
+        }, 3000)
+      }
+    } catch (error) {
+      console.error("Error sending email:", error)
+      setSubmitMessage(
+        "There was an error sending your message. Please try again or contact us directly at euronegoce.mail@gmail.com",
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -104,12 +74,24 @@ export default function ContactFormModal({ isOpen, onClose, selectedProduct }: C
                 <CheckCircle size={32} className="text-green-600" />
               </div>
               <h4 className="text-xl font-bold text-gray-800 mb-2">Thank You!</h4>
-              <p className="text-gray-600 mb-6">
-                Your message has been sent successfully. Our team will contact you shortly.
+              <p className="text-gray-600 mb-6">{submitMessage}</p>
+              <p className="text-sm text-gray-500">
+                You can also reach us directly at: <br />
+                <a href="mailto:euronegoce.mail@gmail.com" className="text-green-600 hover:underline">
+                  euronegoce.mail@gmail.com
+                </a>
               </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {selectedProduct && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-green-800">
+                    <strong>Product of Interest:</strong> {selectedProduct}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                   Full Name <span className="text-red-500">*</span>
@@ -118,14 +100,10 @@ export default function ContactFormModal({ isOpen, onClose, selectedProduct }: C
                   type="text"
                   id="name"
                   name="name"
-                  value={formState.name}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
-                    errors.name ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-100"
-                  }`}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:outline-none"
                   placeholder="Your name"
+                  required
                 />
-                {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
               </div>
 
               <div>
@@ -136,14 +114,10 @@ export default function ContactFormModal({ isOpen, onClose, selectedProduct }: C
                   type="email"
                   id="email"
                   name="email"
-                  value={formState.email}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
-                    errors.email ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-100"
-                  }`}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:outline-none"
                   placeholder="your.email@example.com"
+                  required
                 />
-                {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -155,8 +129,6 @@ export default function ContactFormModal({ isOpen, onClose, selectedProduct }: C
                     type="text"
                     id="company"
                     name="company"
-                    value={formState.company}
-                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:outline-none"
                     placeholder="Your company"
                   />
@@ -170,8 +142,6 @@ export default function ContactFormModal({ isOpen, onClose, selectedProduct }: C
                     type="tel"
                     id="phone"
                     name="phone"
-                    value={formState.phone}
-                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:outline-none"
                     placeholder="+1 (555) 123-4567"
                   />
@@ -186,14 +156,13 @@ export default function ContactFormModal({ isOpen, onClose, selectedProduct }: C
                   id="message"
                   name="message"
                   rows={4}
-                  value={formState.message}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none ${
-                    errors.message ? "border-red-500 focus:ring-red-200" : "border-gray-300 focus:ring-blue-100"
-                  }`}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:outline-none"
                   placeholder="Please provide details about your inquiry..."
+                  defaultValue={
+                    selectedProduct ? `I'm interested in ${selectedProduct}. Please provide more information.` : ""
+                  }
+                  required
                 ></textarea>
-                {errors.message && <p className="mt-1 text-sm text-red-500">{errors.message}</p>}
               </div>
 
               <div className="pt-2">
@@ -240,6 +209,11 @@ export default function ContactFormModal({ isOpen, onClose, selectedProduct }: C
 
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">
+            All messages are sent to{" "}
+            <a href="mailto:euronegoce.mail@gmail.com" className="text-green-600 hover:underline">
+              euronegoce.mail@gmail.com
+            </a>
+            <br />
             By submitting this form, you agree to our privacy policy and terms of service.
           </p>
         </div>

@@ -1,9 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { X, Mail, Phone, MapPin, Send, Clock, Globe } from "lucide-react"
+import { sendContactEmail } from "../app/actions/send-email"
 
 interface ContactPageProps {
   isOpen: boolean
@@ -12,21 +12,30 @@ interface ContactPageProps {
 }
 
 export default function ContactPage({ isOpen, onClose, t }: ContactPageProps) {
-  const [formData, setFormData] = useState({ name: "", email: "", message: "" })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState("")
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value })
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSubmitting(true)
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setSubmitted(true)
-    setSubmitting(false)
+    try {
+      const formData = new FormData(e.currentTarget)
+      const result = await sendContactEmail(formData)
+
+      if (result.success) {
+        setSubmitted(true)
+        setSubmitMessage(result.message)
+      }
+    } catch (error) {
+      console.error("Error sending email:", error)
+      setSubmitMessage(
+        "There was an error sending your message. Please try again or contact us directly at euronegoce.mail@gmail.com",
+      )
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (!isOpen) return null
@@ -104,9 +113,20 @@ export default function ContactPage({ isOpen, onClose, t }: ContactPageProps) {
                       <MapPin size={20} className="text-green-600" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-gray-800 mb-1">Headquarters</h4>
+                      <h4 className="font-semibold text-gray-800 mb-1">Office</h4>
                       <p className="text-gray-600">Paris, France</p>
                       <p className="text-sm text-gray-500 mt-1">European operations center</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <MapPin size={20} className="text-green-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-1">Headquarters</h4>
+                      <p className="text-gray-600">Courneuve, France</p>
+                      <p className="text-sm text-gray-500 mt-1">Main headquarters</p>
                     </div>
                   </div>
 
@@ -169,7 +189,13 @@ export default function ContactPage({ isOpen, onClose, t }: ContactPageProps) {
                       <Mail size={32} className="text-green-600" />
                     </div>
                     <h4 className="text-xl font-bold text-gray-800 mb-2">Message Sent!</h4>
-                    <p className="text-gray-600 mb-6">Thank you for your message. We'll get back to you soon!</p>
+                    <p className="text-gray-600 mb-6">{submitMessage}</p>
+                    <p className="text-sm text-gray-500 mb-6">
+                      You can also reach us directly at: <br />
+                      <a href="mailto:euronegoce.mail@gmail.com" className="text-green-600 hover:underline">
+                        euronegoce.mail@gmail.com
+                      </a>
+                    </p>
                     <button onClick={() => setSubmitted(false)} className="text-green-600 hover:underline font-medium">
                       Send another message
                     </button>
@@ -184,8 +210,6 @@ export default function ContactPage({ isOpen, onClose, t }: ContactPageProps) {
                         type="text"
                         id="name"
                         name="name"
-                        value={formData.name}
-                        onChange={handleChange}
                         className="w-full px-4 py-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         placeholder="Your full name"
                         required
@@ -200,8 +224,6 @@ export default function ContactPage({ isOpen, onClose, t }: ContactPageProps) {
                         type="email"
                         id="email"
                         name="email"
-                        value={formData.email}
-                        onChange={handleChange}
                         className="w-full px-4 py-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         placeholder="your.email@company.com"
                         required
@@ -215,8 +237,6 @@ export default function ContactPage({ isOpen, onClose, t }: ContactPageProps) {
                       <textarea
                         id="message"
                         name="message"
-                        value={formData.message}
-                        onChange={handleChange}
                         rows={5}
                         className="w-full px-4 py-4 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-none"
                         placeholder="Tell us about your requirements, questions, or how we can help you..."
@@ -243,6 +263,11 @@ export default function ContactPage({ isOpen, onClose, t }: ContactPageProps) {
                     </button>
 
                     <p className="text-sm text-gray-500 text-center">
+                      All messages are sent to{" "}
+                      <a href="mailto:euronegoce.mail@gmail.com" className="text-green-600 hover:underline">
+                        euronegoce.mail@gmail.com
+                      </a>
+                      <br />
                       By submitting this form, you agree to our privacy policy and terms of service.
                     </p>
                   </form>
