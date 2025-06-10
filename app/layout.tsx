@@ -2,50 +2,58 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
+import CookieConsent from "./components/cookie-consent"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Euro Negoce - Premium Mediterranean Produce & Edible Oils | International Trade",
+  title: "Euro Negoce Global - Premium Agricultural Products Worldwide",
   description:
-    "Euro Negoce specializes in importing and exporting high-quality fresh fruits, vegetables, and premium edible oils from Mediterranean regions. Trusted by leading retailers worldwide for quality, reliability, and exceptional service.",
+    "Euro Negoce Global specializes in sourcing and distributing premium agricultural products from Tunisia and across the globe. Quality guaranteed, worldwide delivery.",
   keywords:
-    "Mediterranean produce, olive oil, fresh fruits, vegetables, international trade, wholesale, retail, Tunisia, Spain, Italy, premium quality, organic, export, import",
-  authors: [{ name: "Euro Negoce" }],
-  creator: "Euro Negoce",
-  publisher: "Euro Negoce",
-  robots: "index, follow",
+    "agricultural products, Tunisia, olive oil, rapeseed oil, fruits, vegetables, global trade, premium quality",
+  authors: [{ name: "Euro Negoce Global" }],
+  creator: "Euro Negoce Global",
+  publisher: "Euro Negoce Global",
+  metadataBase: new URL("https://www.euronegoceglobal.com"),
+  alternates: {
+    canonical: "https://www.euronegoceglobal.com",
+  },
   openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: "https://euronegoce.com",
-    title: "Euro Negoce - Premium Mediterranean Produce & Edible Oils",
+    title: "Euro Negoce Global - Premium Agricultural Products Worldwide",
     description:
-      "Premier international trade company specializing in high-quality fresh fruits, vegetables, and premium edible oils from Mediterranean regions.",
-    siteName: "Euro Negoce",
+      "Specializing in premium agricultural products from Tunisia and worldwide. Quality guaranteed, global delivery.",
+    url: "https://www.euronegoceglobal.com",
+    siteName: "Euro Negoce Global",
+    locale: "en_US",
+    type: "website",
     images: [
       {
-        url: "/images/og-image.jpg",
+        url: "/placeholder.jpg",
         width: 1200,
         height: 630,
-        alt: "Euro Negoce - Premium Mediterranean Produce",
+        alt: "Euro Negoce Global - Premium Agricultural Products",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Euro Negoce - Premium Mediterranean Produce & Edible Oils",
+    title: "Euro Negoce Global - Premium Agricultural Products Worldwide",
     description:
-      "Premier international trade company specializing in high-quality fresh fruits, vegetables, and premium edible oils.",
-    images: ["/images/og-image.jpg"],
+      "Specializing in premium agricultural products from Tunisia and worldwide. Quality guaranteed, global delivery.",
+    images: ["/placeholder.jpg"],
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 5,
-  },
-  verification: {
-    google: "your-google-verification-code",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
     generator: 'v0.dev'
 }
@@ -56,15 +64,18 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="canonical" href="https://euronegoce.com" />
+        <link rel="canonical" href="https://www.euronegoceglobal.com" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <meta name="theme-color" content="#16a34a" />
-        <meta name="format-detection" content="telephone=no" />
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          {children}
+          <CookieConsent />
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
