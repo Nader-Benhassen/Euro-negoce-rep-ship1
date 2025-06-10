@@ -136,11 +136,11 @@ function ProductGallery() {
       category: "oils",
       image: "/images/products/olive-oil.jpeg",
       description: "Cold-pressed olive oil from century-old Mediterranean trees",
-      origin: "Tunisia, Spain, Italy, Greece",
+      origin: "Tunisia",
       season: "Year-round",
       certifications: ["Origin Control", "HACCP", "BIO"],
       detailedDescription:
-        "Our premium extra virgin olive oil is cold-pressed from carefully selected olives grown in century-old groves across the Mediterranean. Each batch is tested for quality and purity, ensuring the highest standards of flavor and nutritional value.",
+        "Our premium extra virgin olive oil is cold-pressed from carefully selected olives grown in century-old groves across Tunisia. Each batch is tested for quality and purity, ensuring the highest standards of flavor and nutritional value.",
       nutritionalInfo: {
         calories: "884 kcal/100ml",
         protein: "0g",
@@ -158,11 +158,11 @@ function ProductGallery() {
       category: "oils",
       image: "/images/products/rapeseed-oil-field.jpeg",
       description: "High-quality rapeseed oil with excellent cooking properties",
-      origin: "Germany, Netherlands, France",
+      origin: "Tunisia",
       season: "Year-round",
       certifications: ["Origin Control", "HACCP"],
       detailedDescription:
-        "Premium rapeseed oil extracted from high-quality European rapeseed. Known for its neutral taste and high smoke point, making it perfect for cooking and food preparation.",
+        "Premium rapeseed oil extracted from high-quality Tunisian rapeseed. Known for its neutral taste and high smoke point, making it perfect for cooking and food preparation.",
       nutritionalInfo: {
         calories: "884 kcal/100ml",
         protein: "0g",
