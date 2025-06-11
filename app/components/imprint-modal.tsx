@@ -124,8 +124,8 @@ export default function ImprintModal({ isOpen, onClose }: ImprintModalProps) {
                     <Mail className="text-green-600 mt-1" size={20} />
                     <div>
                       <h5 className="font-medium text-gray-700">Email</h5>
-                      <a href="mailto:euronegoce.mail@gmail.com" className="text-green-600 hover:underline">
-                        euronegoce.mail@gmail.com
+                      <a href="mailto:contact@euronegocetrade.com" className="text-green-600 hover:underline">
+                        contact@euronegocetrade.com
                       </a>
                     </div>
                   </div>
