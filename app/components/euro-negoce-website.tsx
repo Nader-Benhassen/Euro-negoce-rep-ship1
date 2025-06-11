@@ -336,11 +336,11 @@ function ProductGallery() {
       category: "fruits",
       image: "/images/products/pineapple.png",
       description: "Sweet and tangy pineapples with tropical flavor",
-      origin: "Tunisia",
+      origin: "Ghana and Ivory Coast",
       season: "Year-round",
       certifications: ["Rainforest Alliance"],
       detailedDescription:
-        "Our pineapples are sourced from sustainable farms in Tunisia, known for their perfect balance of sweetness and acidity with intense tropical flavor.",
+        "Our pineapples are sourced from sustainable farms in Ghana and Ivory Coast, known for their perfect balance of sweetness and acidity with intense tropical flavor.",
       nutritionalInfo: {
         calories: "50 kcal/100g",
         protein: "0.5g",
