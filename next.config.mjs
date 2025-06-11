@@ -8,7 +8,7 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    domains: ['euronegoceglobal.com', 'www.euronegoceglobal.com'],
+    domains: ['euronegocetrade.com', 'www.euronegocetrade.com'],
   },
   async redirects() {
     return [
@@ -17,10 +17,10 @@ const nextConfig = {
         has: [
           {
             type: 'host',
-            value: 'euronegoceglobal.com',
+            value: 'euronegocetrade.com',
           },
         ],
-        destination: 'https://www.euronegoceglobal.com/:path*',
+        destination: 'https://www.euronegocetrade.com/:path*',
         permanent: true,
       },
     ]

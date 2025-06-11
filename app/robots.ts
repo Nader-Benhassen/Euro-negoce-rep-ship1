@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/private/", "/admin/"],
     },
-    sitemap: "https://www.euronegoceglobal.com/sitemap.xml",
+    sitemap: "https://www.euronegocetrade.com/sitemap.xml",
   }
 }
