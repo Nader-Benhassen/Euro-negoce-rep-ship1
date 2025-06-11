@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 
     const emailData = {
       from: "noreply@euronegocetrade.com",
-      to: ["euronegoce.mail@gmail.com"],
+      to: ["contact@euronegocetrade.com"],
       reply_to: email,
       subject: `🔔 New Contact: ${name} - ${company || "Individual"}`,
       html: `
@@ -208,7 +208,7 @@ export async function POST(request: Request) {
     return Response.json(
       {
         success: false,
-        error: "An unexpected error occurred. Please try again or contact us directly at euronegoce.mail@gmail.com",
+        error: "An unexpected error occurred. Please try again or contact us directly at contact@euronegocetrade.com",
       },
       { status: 500 },
     )

@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     // Send email to company
     const emailData = {
       from: "noreply@euronegocetrade.com",
-      to: ["euronegoce.mail@gmail.com"],
+      to: ["contact@euronegocetrade.com"],
       reply_to: email,
       subject: `📅 Call Scheduled: ${name} - ${topic}`,
       html: `
@@ -146,7 +146,7 @@ export async function POST(request: Request) {
               </p>
             </div>
             
-            <p style="margin-top: 20px;">If you need to reschedule or have any questions, please reply to this email or contact us at euronegoce.mail@gmail.com.</p>
+            <p style="margin-top: 20px;">If you need to reschedule or have any questions, please reply to this email or contact us at contact@euronegocetrade.com.</p>
             
             <p>Best regards,<br>Euro Negoce Trade Team</p>
           </div>
