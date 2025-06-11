@@ -116,8 +116,8 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
               <p className="text-gray-600 mb-6">{submitMessage}</p>
               <p className="text-sm text-gray-500 mb-6">
                 You can also reach us directly at: <br />
-                <a href="mailto:euronegoce.mail@gmail.com" className="text-green-600 hover:underline">
-                  euronegoce.mail@gmail.com
+                <a href="mailto:contact@euronegocetrade.com" className="text-green-600 hover:underline">
+                  contact@euronegocetrade.com
                 </a>
               </p>
               <div className="flex gap-4 justify-center">
@@ -370,8 +370,8 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
 
               <p className="text-xs text-gray-500 text-center">
                 All quote requests are sent to{" "}
-                <a href="mailto:euronegoce.mail@gmail.com" className="text-green-600 hover:underline">
-                  euronegoce.mail@gmail.com
+                <a href="mailto:contact@euronegocetrade.com" className="text-green-600 hover:underline">
+                  contact@euronegocetrade.com
                 </a>
               </p>
             </form>

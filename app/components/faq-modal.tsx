@@ -160,7 +160,7 @@ export default function FaqModal({ isOpen, onClose, onContactClick }: FaqModalPr
         id: "contact-1",
         question: "How can I request a quote?",
         answer:
-          "You can request a quote by clicking the 'Request a Quote' button on our website, emailing our sales team at euronegoce.mail@gmail.com, or contacting us via WhatsApp at +49 151 45750507. Please provide details about the products, quantities, and delivery location for an accurate quote.",
+          "You can request a quote by clicking the 'Request a Quote' button on our website, emailing our sales team at contact@euronegocetrade.com, or contacting us via WhatsApp at +49 151 45750507. Please provide details about the products, quantities, and delivery location for an accurate quote.",
       },
       {
         id: "contact-2",

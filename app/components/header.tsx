@@ -7,8 +7,7 @@ import { useState as useStateReact } from "react"
 import { Mail, ChevronDown, FileText, Award, Menu, X } from "lucide-react"
 import FaqModal from "./faq-modal"
 import ImprintModal from "./imprint-modal"
-import ContactPage from "../../components/contact-page"
-import CertificationsPage from "../../components/certifications"
+import ContactFormModal from "./contact-form-modal"
 
 // Translation hook
 const useTranslation = () => {
@@ -75,7 +74,7 @@ export default function Header() {
   const activeSection = useActiveSection(sections)
   const [showFaq, setShowFaq] = useStateReact(false)
   const [showImprint, setShowImprint] = useStateReact(false)
-  const [showContact, setShowContact] = useStateReact(false)
+  const [showContactForm, setShowContactForm] = useStateReact(false)
   const [showCertifications, setShowCertifications] = useStateReact(false)
   const [showDropdown, setShowDropdown] = useStateReact(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useStateReact(false)
@@ -91,7 +90,7 @@ export default function Header() {
 
     document.addEventListener("mousedown", handleClickOutside)
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
+      window.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
 
@@ -125,7 +124,11 @@ export default function Header() {
 
   const handleContactFromFaq = () => {
     setShowFaq(false)
-    setShowContact(true)
+    setShowContactForm(true)
+  }
+
+  const handleContactClick = () => {
+    setShowContactForm(true)
   }
 
   return (
@@ -206,7 +209,7 @@ export default function Header() {
               {/* Contact Button - Made bigger */}
               <button
                 className="relative px-3 sm:px-4 lg:px-5 py-2 sm:py-2.5 lg:py-3 text-xs sm:text-sm lg:text-base font-semibold uppercase tracking-wider transition-all duration-300 rounded-lg flex items-center gap-2 bg-green-600 text-white hover:bg-green-700 whitespace-nowrap shadow-lg hover:shadow-xl"
-                onClick={() => setShowContact(true)}
+                onClick={handleContactClick}
               >
                 <Mail size={14} />
                 <span className="hidden sm:inline">Contact Us</span>
@@ -277,6 +280,12 @@ export default function Header() {
                 >
                   Imprint
                 </button>
+                <button
+                  className="block w-full text-left px-4 py-3 text-sm font-semibold uppercase tracking-wider text-slate-300 hover:text-white hover:bg-blue-800/20 transition-colors rounded-lg"
+                  onClick={handleContactClick}
+                >
+                  Contact Us
+                </button>
               </nav>
             </div>
           )}
@@ -289,11 +298,8 @@ export default function Header() {
       {/* Imprint Modal */}
       <ImprintModal isOpen={showImprint} onClose={() => setShowImprint(false)} />
 
-      {/* Contact Modal */}
-      <ContactPage isOpen={showContact} onClose={() => setShowContact(false)} t={t} />
-
-      {/* Certifications Modal */}
-      <CertificationsPage isOpen={showCertifications} onClose={() => setShowCertifications(false)} t={t} />
+      {/* Contact Form Modal */}
+      <ContactFormModal isOpen={showContactForm} onClose={() => setShowContactForm(false)} />
     </>
   )
 }

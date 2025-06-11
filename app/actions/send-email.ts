@@ -31,7 +31,7 @@ export async function sendContactEmail(formData: FormData) {
   await new Promise((resolve) => setTimeout(resolve, 1000))
 
   // In production, you would send the email here
-  console.log("Email would be sent to: euronegoce.mail@gmail.com")
+  console.log("Email would be sent to: contact@euronegocetrade.com")
   console.log("Email content:", emailContent)
 
   return {
@@ -79,7 +79,7 @@ export async function sendQuoteRequest(formData: FormData) {
   await new Promise((resolve) => setTimeout(resolve, 1500))
 
   // In production, you would send the email here
-  console.log("Quote request would be sent to: euronegoce.mail@gmail.com")
+  console.log("Quote request would be sent to: contact@euronegocetrade.com")
   console.log("Email content:", emailContent)
 
   return {

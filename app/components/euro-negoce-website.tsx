@@ -22,7 +22,6 @@ import ProductsModal from "./products-modal"
 import Header from "./header"
 import CookieConsent from "./cookie-consent"
 import GlobalOperationsSection from "./global-operations-section"
-import ContactPage from "../../components/contact-page"
 import ImprintModal from "./imprint-modal"
 import ProductDetailModal from "./product-detail-modal"
 import { useMediaQuery } from "../../hooks/use-media-query"
@@ -695,7 +694,7 @@ function ProductGallery() {
             </div>
           </div>
 
-          {/* Products Grid - Updated to show 4 per row */}
+          {/* Products Grid */}
           {filteredProducts.length === 0 ? (
             <div className="text-center py-12 px-4">
               <p className="text-lg sm:text-xl text-gray-600 mb-4">No products found matching your criteria.</p>
@@ -971,7 +970,7 @@ function Testimonials() {
                 <div className="relative mb-3 sm:mb-4">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 xl:w-40 xl:h-40 rounded-xl bg-gradient-to-br from-blue-50 to-green-50 shadow-xl border border-gray-200 p-3 sm:p-4 lg:p-6 flex items-center justify-center">
                     <div className="text-center">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-blue-600 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
                         <Building size={isMobile ? 16 : isTablet ? 20 : 24} className="text-white" />
                       </div>
                       <div className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 leading-tight">
@@ -1042,7 +1041,7 @@ function Footer() {
   const [showImprint, setShowImprint] = useState(false)
   const [showCookies, setShowCookies] = useState(false)
   const [showLegalNotice, setShowLegalNotice] = useState(false)
-  const [showContact, setShowContact] = useState(false)
+  const [showContactModal, setShowContactModal] = useState(false)
   const { t } = useTranslation()
   const isMobile = useMediaQuery("(max-width: 640px)")
 
@@ -1076,7 +1075,7 @@ function Footer() {
               </button>
               <button
                 className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-300"
-                onClick={() => setShowContact(true)}
+                onClick={() => setShowContactModal(true)}
                 aria-label="Contact us"
               >
                 <Mail size={isMobile ? 12 : 16} />
@@ -1090,7 +1089,7 @@ function Footer() {
       {/* Modals */}
       <ImprintModal isOpen={showImprint} onClose={() => setShowImprint(false)} />
       <CookieConsent isManuallyOpened={showCookies} onClose={() => setShowCookies(false)} />
-      <ContactPage isOpen={showContact} onClose={() => setShowContact(false)} t={t} />
+      <ContactModal isOpen={showContactModal} onClose={() => setShowContactModal(false)} />
 
       {/* Legal Notice Modal */}
       {showLegalNotice && (
