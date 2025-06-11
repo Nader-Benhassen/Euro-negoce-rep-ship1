@@ -27,6 +27,7 @@ import ImprintModal from "./imprint-modal"
 import ProductDetailModal from "./product-detail-modal"
 import { useMediaQuery } from "../../hooks/use-media-query"
 import AppointmentScheduler from "./appointment-scheduler"
+import ChatBot from "./chatbot/chat-bot"
 
 // Translation hook
 const useTranslation = () => {
@@ -1164,6 +1165,39 @@ export default function EuroNegoceWebsite() {
   const [showScheduler, setShowScheduler] = useState(false)
   const { t } = useTranslation()
 
+  // Add event listeners for chatbot integration
+  useEffect(() => {
+    const handleOpenQuoteModal = () => {
+      setShowContactModal(true)
+    }
+
+    const handleOpenContactModal = () => {
+      setShowContactModal(true)
+    }
+
+    const handleOpenCallScheduler = () => {
+      setShowScheduler(true)
+    }
+
+    const handleOpenProductsModal = () => {
+      setShowProductsModal(true)
+    }
+
+    // Add event listeners
+    window.addEventListener("openQuoteModal", handleOpenQuoteModal)
+    window.addEventListener("openContactModal", handleOpenContactModal)
+    window.addEventListener("openCallScheduler", handleOpenCallScheduler)
+    window.addEventListener("openProductsModal", handleOpenProductsModal)
+
+    // Cleanup event listeners
+    return () => {
+      window.removeEventListener("openQuoteModal", handleOpenQuoteModal)
+      window.removeEventListener("openContactModal", handleOpenContactModal)
+      window.removeEventListener("openCallScheduler", handleOpenCallScheduler)
+      window.removeEventListener("openProductsModal", handleOpenProductsModal)
+    }
+  }, [])
+
   return (
     <>
       <CookieConsent />
@@ -1183,6 +1217,7 @@ export default function EuroNegoceWebsite() {
       <ContactModal isOpen={showContactModal} onClose={() => setShowContactModal(false)} />
       <ProductsModal isOpen={showProductsModal} onClose={() => setShowProductsModal(false)} />
       <AppointmentScheduler isOpen={showScheduler} onClose={() => setShowScheduler(false)} />
+      <ChatBot />
     </>
   )
 }
