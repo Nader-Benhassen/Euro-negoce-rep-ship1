@@ -1,11 +1,30 @@
 import { NextResponse } from "next/server"
-import { sendEmail } from "@/lib/email"
+import { sendEmail, verifyApiKey } from "@/lib/email"
 
 export async function POST(request: Request) {
   const startTime = Date.now()
   console.log("🚀 Contact form submission started at:", new Date().toISOString())
 
   try {
+    // First, verify the API key
+    const keyVerification = verifyApiKey()
+    console.log("🔑 API Key Verification:", keyVerification)
+
+    if (!keyVerification.isCorrectKey) {
+      console.error("❌ API Key verification failed:", keyVerification.message)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Email service configuration error. Please contact support.",
+          debug: {
+            keyVerification,
+            timestamp: new Date().toISOString(),
+          },
+        },
+        { status: 500 },
+      )
+    }
+
     const body = await request.json()
     console.log("📝 Form data received:", JSON.stringify(body, null, 2))
 
@@ -71,7 +90,7 @@ export async function POST(request: Request) {
               <strong>Submission Details:</strong><br>
               Timestamp: ${new Date().toLocaleString()}<br>
               Processing Time: ${Date.now() - startTime}ms<br>
-              User Agent: ${request.headers.get("user-agent") || "Unknown"}
+              API Key Status: ${keyVerification.message}
             </p>
           </div>
         </div>
@@ -89,49 +108,6 @@ export async function POST(request: Request) {
 
     console.log("✅ Main email sent successfully")
 
-    // Send confirmation to customer
-    try {
-      console.log("📧 Sending confirmation email to customer")
-      await sendEmail({
-        to: sanitizedEmail,
-        subject: "Thank you for contacting Euro Negoce Trade",
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: #16a34a; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-              <h2 style="margin: 0;">Thank you for contacting Euro Negoce Trade</h2>
-            </div>
-            
-            <div style="padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
-              <p>Dear ${sanitizedName},</p>
-              
-              <p>Thank you for your inquiry. We have received your message and our team will contact you within 24 hours.</p>
-              
-              <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #374151; margin-top: 0;">Your Message Summary</h3>
-                <p><strong>Subject:</strong> ${sanitizedProduct ? `Inquiry about ${sanitizedProduct}` : "General Inquiry"}</p>
-                <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
-              </div>
-              
-              <div style="background: #dcfce7; padding: 15px; border-radius: 8px;">
-                <p style="margin: 0; color: #166534;">
-                  <strong>Contact Information:</strong><br>
-                  Email: contact@euronegocetrade.com<br>
-                  Phone: +33 1 48 11 65 91<br>
-                  Website: www.euronegocetrade.com
-                </p>
-              </div>
-              
-              <p>Best regards,<br><strong>Euro Negoce Trade Team</strong></p>
-            </div>
-          </div>
-        `,
-      })
-      console.log("✅ Confirmation email sent successfully")
-    } catch (confirmError) {
-      console.warn("⚠️ Failed to send confirmation email:", confirmError)
-      // Don't fail the request if confirmation email fails
-    }
-
     const totalTime = Date.now() - startTime
     console.log(`🎉 Contact form submission completed successfully in ${totalTime}ms`)
 
@@ -141,6 +117,7 @@ export async function POST(request: Request) {
       debug: {
         processingTime: totalTime,
         timestamp: new Date().toISOString(),
+        apiKeyStatus: keyVerification.message,
       },
     })
   } catch (error) {

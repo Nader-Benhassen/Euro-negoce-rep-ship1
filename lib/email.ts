@@ -1,11 +1,27 @@
 import { Resend } from "resend"
 
+// Get API key from environment variables
 const resendApiKey = process.env.RESEND_API_KEY
 const resend = resendApiKey ? new Resend(resendApiKey) : null
 
 // Email configuration
-const FROM_EMAIL = "onboarding@resend.dev" // Use Resend's verified domain initially
+const FROM_EMAIL = "onboarding@resend.dev" // Use Resend's verified domain
 const TO_EMAIL = "contact@euronegocetrade.com"
+
+// Function to verify the correct API key is loaded
+export function verifyApiKey() {
+  const expectedKeyPrefix = "re_5FM8T24R_5CiKQSRbHYX6FmDsBoEpUeTz"
+  const isCorrectKey = resendApiKey === expectedKeyPrefix
+
+  return {
+    hasApiKey: !!resendApiKey,
+    keyLength: resendApiKey?.length || 0,
+    keyPrefix: resendApiKey?.substring(0, 12) + "..." || "none",
+    isCorrectKey,
+    expectedPrefix: "re_5FM8T24R_...",
+    message: isCorrectKey ? "✅ Correct API key is loaded" : "❌ API key mismatch or missing",
+  }
+}
 
 export async function sendEmail({
   to = TO_EMAIL,
@@ -22,14 +38,15 @@ export async function sendEmail({
   text?: string
   replyTo?: string
 }) {
-  console.log("🔍 Email Debug Info:")
-  console.log("- API Key exists:", !!resendApiKey)
-  console.log("- API Key length:", resendApiKey?.length || 0)
-  console.log("- API Key prefix:", resendApiKey?.substring(0, 8) + "..." || "none")
-  console.log("- Resend instance:", !!resend)
-  console.log("- From:", from)
-  console.log("- To:", to)
-  console.log("- Subject:", subject)
+  // Verify API key before sending
+  const keyVerification = verifyApiKey()
+  console.log("🔑 API Key Verification:", keyVerification)
+
+  if (!keyVerification.isCorrectKey) {
+    const error = `API key verification failed: ${keyVerification.message}`
+    console.error("❌", error)
+    throw new Error(error)
+  }
 
   if (!resend) {
     const error = "Resend not initialized - RESEND_API_KEY missing or invalid"
@@ -47,7 +64,10 @@ export async function sendEmail({
       ...(replyTo ? { reply_to: replyTo } : {}),
     }
 
-    console.log("📧 Sending email with data:", JSON.stringify(emailData, null, 2))
+    console.log("📧 Sending email with verified API key")
+    console.log("- From:", from)
+    console.log("- To:", to)
+    console.log("- Subject:", subject)
 
     const response = await resend.emails.send(emailData)
 
@@ -56,8 +76,6 @@ export async function sendEmail({
   } catch (error) {
     console.error("❌ Email sending failed:")
     console.error("Error:", error)
-    console.error("Error type:", typeof error)
-    console.error("Error constructor:", error?.constructor?.name)
 
     if (error instanceof Error) {
       console.error("Error message:", error.message)
@@ -68,15 +86,24 @@ export async function sendEmail({
   }
 }
 
-// Test function to verify email configuration
+// Test function to verify email configuration with the correct API key
 export async function testEmailConfig() {
+  const keyVerification = verifyApiKey()
+
   try {
+    if (!keyVerification.isCorrectKey) {
+      return {
+        success: false,
+        message: "Incorrect API key configured",
+        keyVerification,
+      }
+    }
+
     if (!resend) {
       return {
         success: false,
-        message: "Resend API key not configured",
-        apiKeyConfigured: !!resendApiKey,
-        apiKeyLength: resendApiKey?.length || 0,
+        message: "Resend not initialized",
+        keyVerification,
       }
     }
 
@@ -84,15 +111,23 @@ export async function testEmailConfig() {
     const pingResult = await resend.emails.send({
       from: FROM_EMAIL,
       to: TO_EMAIL,
-      subject: "Email System Test",
-      html: "<p>This is a test email to verify the email system is working.</p>",
+      subject: "Email System Test - API Key Verification",
+      html: `
+        <h2>Email System Test</h2>
+        <p>This is a test email to verify the email system is working with the correct API key.</p>
+        <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <h3>API Key Verification:</h3>
+          <p><strong>Status:</strong> ${keyVerification.message}</p>
+          <p><strong>Key Prefix:</strong> ${keyVerification.keyPrefix}</p>
+          <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+        </div>
+      `,
     })
 
     return {
       success: true,
-      message: "Email configuration is valid",
-      apiKeyConfigured: !!resendApiKey,
-      apiKeyLength: resendApiKey?.length || 0,
+      message: "Email configuration is valid with correct API key",
+      keyVerification,
       pingResult,
     }
   } catch (error) {
@@ -100,8 +135,7 @@ export async function testEmailConfig() {
       success: false,
       message: "Email configuration test failed",
       error: error instanceof Error ? error.message : String(error),
-      apiKeyConfigured: !!resendApiKey,
-      apiKeyLength: resendApiKey?.length || 0,
+      keyVerification,
     }
   }
 }
