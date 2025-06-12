@@ -174,6 +174,28 @@ function ProductGallery() {
       storageConditions: "Store in cool, dry place",
       harvestMethod: "Mechanically harvested and processed",
     },
+    {
+      id: "dates",
+      name: "Premium Dates",
+      category: "fruits",
+      image: "/images/products/dates.png",
+      description: "Sweet and nutritious dates with rich flavor",
+      origin: "Tunisia, Saudi Arabia and Algeria",
+      season: "Year-round",
+      certifications: ["Organic"],
+      detailedDescription:
+        "Our dates are sourced from the finest oases of Tunisia, Saudi Arabia, and Algeria, where the desert climate produces exceptionally sweet and flavorful fruit. Rich in natural sugars and nutrients.",
+      nutritionalInfo: {
+        calories: "277 kcal/100g",
+        protein: "1.8g",
+        carbs: "75g",
+        fiber: "6.7g",
+        vitamins: ["Potassium", "Copper", "Manganese"],
+      },
+      shelfLife: "12 months in proper storage",
+      storageConditions: "Store in cool, dry place in airtight container",
+      harvestMethod: "Hand-picked from date palms",
+    },
     // Fruits
     {
       id: "apples",
@@ -599,28 +621,6 @@ function ProductGallery() {
       shelfLife: "12 months in proper storage",
       storageConditions: "Store in cool, dry place in airtight container",
       harvestMethod: "Mechanically harvested and processed",
-    },
-    {
-      id: "dates",
-      name: "Premium Dates",
-      category: "fruits",
-      image: "/images/products/dates.png",
-      description: "Sweet and nutritious dates with rich flavor",
-      origin: "Tunisia, Saudi Arabia and Algeria",
-      season: "Year-round",
-      certifications: ["Organic"],
-      detailedDescription:
-        "Our dates are sourced from the finest oases of Tunisia, Saudi Arabia, and Algeria, where the desert climate produces exceptionally sweet and flavorful fruit. Rich in natural sugars and nutrients.",
-      nutritionalInfo: {
-        calories: "277 kcal/100g",
-        protein: "1.8g",
-        carbs: "75g",
-        fiber: "6.7g",
-        vitamins: ["Potassium", "Copper", "Manganese"],
-      },
-      shelfLife: "12 months in proper storage",
-      storageConditions: "Store in cool, dry place in airtight container",
-      harvestMethod: "Hand-picked from date palms",
     },
   ]
 
