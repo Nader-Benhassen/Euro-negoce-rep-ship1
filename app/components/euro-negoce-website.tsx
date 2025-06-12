@@ -793,24 +793,59 @@ function Testimonials() {
 
   const testimonials = [
     {
-      name: "Sophie Dubois",
-      company: "Carrefour",
-      location: "Paris, France",
+      name: "Ahmed Al-Mansouri",
+      company: "Al-Noor Mini Market",
+      location: "Dubai, UAE",
       rating: 5,
-      text: "Carrefour has been consistently impressed with Euro Negoce's exceptional quality standards and reliability. Their Tunisian olive oil and Spanish citrus products have become customer favorites across our French stores. The team's professionalism and attention to detail in every shipment makes them our preferred Mediterranean produce partner.",
-      role: "International Procurement Manager",
-      highlight: "Exceptional Quality Standards",
+      text: "As a small family-run supermarket in Dubai, we've been working with Euro Negoce for over two years. Their fresh dates and premium olive oil from Tunisia have become bestsellers among our local customers. The quality is consistently excellent, and their flexible ordering quantities work perfectly for our smaller business needs.",
+      role: "Store Owner",
+      highlight: "Perfect for Small Business",
     },
     {
-      name: "David Thompson",
-      company: "Tesco",
-      location: "London, United Kingdom",
+      name: "Marie Dubois",
+      company: "Épicerie Belle Vue",
+      location: "Lyon, France",
       rating: 5,
-      text: "Euro Negoce has transformed our fresh produce sourcing with their outstanding Italian tomatoes and Spanish peppers. The consistency in quality, freshness, and extended shelf life has significantly improved our customer satisfaction. Their logistics coordination is seamless and their customer service is truly world-class.",
-      role: "Fresh Produce Category Manager",
-      highlight: "Outstanding Product Quality",
+      text: "Our small neighborhood grocery store has found the perfect partner in Euro Negoce. Their Mediterranean products, especially the artichokes and premium oils, are exactly what our French customers love. The personal service and attention to detail make all the difference for a small business like ours.",
+      role: "Shop Manager",
+      highlight: "Excellent Mediterranean Products",
     },
-    // Add more testimonials...
+    {
+      name: "James Mitchell",
+      company: "Corner Fresh Market",
+      location: "Manchester, UK",
+      rating: 5,
+      text: "Euro Negoce has been a game-changer for our small independent supermarket. Their fresh produce arrives in perfect condition, and the variety of North African specialties has attracted new customers to our store. The team understands the needs of smaller retailers and provides excellent support.",
+      role: "Owner-Manager",
+      highlight: "Great Support for Independent Stores",
+    },
+    {
+      name: "Fatima Al-Zahra",
+      company: "Souq Al-Khaleej Market",
+      location: "Doha, Qatar",
+      rating: 5,
+      text: "Our small community market in Doha has been delighted with Euro Negoce's service. The premium dates, fresh fruits, and traditional products from Tunisia and Algeria are very popular with our customers. Their understanding of Middle Eastern tastes and preferences is exceptional.",
+      role: "Store Manager",
+      highlight: "Understanding of Local Tastes",
+    },
+    {
+      name: "Hassan Al-Rashid",
+      company: "Emirates Fresh Store",
+      location: "Abu Dhabi, UAE",
+      rating: 5,
+      text: "As a small supermarket serving the local community, we appreciate Euro Negoce's commitment to quality and reliability. Their fresh produce and specialty items from North Africa have helped us differentiate from larger competitors. The personal relationship we've built with their team is invaluable.",
+      role: "Proprietor",
+      highlight: "Personal Service Excellence",
+    },
+    {
+      name: "Sophie Laurent",
+      company: "Marché du Quartier",
+      location: "Nice, France",
+      rating: 5,
+      text: "Our small neighborhood market has been working with Euro Negoce for three years. Their seasonal fruits and vegetables, particularly the melons and peaches, are always fresh and of the highest quality. They understand the importance of consistent supply for small businesses like ours.",
+      role: "Co-Owner",
+      highlight: "Consistent Quality Supply",
+    },
   ]
 
   const nextTestimonial = () => {
@@ -852,7 +887,7 @@ function Testimonials() {
             Client Success Stories
           </h2>
           <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
-            Trusted by leading retailers and distributors worldwide for quality, reliability, and exceptional service
+            Trusted by independent retailers worldwide for quality, reliability, and exceptional service
           </p>
         </div>
 
@@ -923,30 +958,29 @@ function Testimonials() {
               </button>
             </div>
 
-            {/* Testimonial Content */}
+            {/* Testimonial Content - Improved Layout */}
             <div className="md:flex items-start gap-4 sm:gap-6 md:gap-8">
               <div className="md:w-1/3 mb-4 sm:mb-6 md:mb-0 flex flex-col items-center">
-                {/* Company Display */}
-                <div className="relative mb-3 sm:mb-4">
-                  <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 xl:w-40 xl:h-40 rounded-xl bg-gradient-to-br from-blue-50 to-green-50 shadow-xl border border-gray-200 p-3 sm:p-4 lg:p-6 flex items-center justify-center">
+                {/* Company Display - Improved to handle longer names */}
+                <div className="relative mb-3 sm:mb-4 w-full max-w-[280px] mx-auto">
+                  <div className="aspect-square rounded-xl bg-gradient-to-br from-blue-50 to-green-50 shadow-xl border border-gray-200 p-3 sm:p-4 flex flex-col items-center justify-center">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-600 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center">
+                      <Building size={isMobile ? 20 : 24} className="text-white" />
+                    </div>
                     <div className="text-center">
-                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
-                        <Building size={isMobile ? 16 : isTablet ? 20 : 24} className="text-white" />
-                      </div>
-                      <div className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 leading-tight">
+                      <div className="text-base sm:text-lg font-bold text-gray-800 leading-tight px-1 break-words">
                         {testimonials[currentIndex].company}
                       </div>
+                      <div className="text-xs sm:text-sm text-gray-600 mt-1">{testimonials[currentIndex].location}</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Company Info */}
-                <div className="w-full text-center p-2 sm:p-3 lg:p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-100">
-                  <div className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Company</div>
-                  <div className="text-sm sm:text-base lg:text-lg font-bold text-blue-600">
-                    {testimonials[currentIndex].company}
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-600">{testimonials[currentIndex].location}</div>
+                {/* Company Info - Improved spacing and text handling */}
+                <div className="w-full max-w-[280px] mx-auto text-center p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-100">
+                  <div className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Business Type</div>
+                  <div className="text-sm sm:text-base font-bold text-blue-600">Independent Retailer</div>
+                  <div className="text-xs sm:text-sm text-gray-600 mt-1">Partnered since 2023</div>
                 </div>
               </div>
 
@@ -971,7 +1005,7 @@ function Testimonials() {
                   </button>
                 </div>
 
-                <blockquote className="text-sm sm:text-base lg:text-lg xl:text-xl text-gray-700 mb-4 sm:mb-6 leading-relaxed italic">
+                <blockquote className="text-sm sm:text-base lg:text-lg text-gray-700 mb-4 sm:mb-6 leading-relaxed italic">
                   <Quote size={isMobile ? 16 : 20} className="inline-block mr-2 text-blue-500 opacity-60" />
                   {testimonials[currentIndex].text}
                 </blockquote>

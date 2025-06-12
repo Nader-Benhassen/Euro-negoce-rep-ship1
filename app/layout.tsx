@@ -97,18 +97,11 @@ export const metadata: Metadata = {
     siteName: "Euro Negoce Trading",
     images: [
       {
-        url: "/images/og-euronegoce-trading.jpg",
-        width: 1200,
-        height: 630,
+        url: "/favicon.png",
+        width: 800,
+        height: 800,
         alt: "Euro Negoce - Premium Olive Oil and Mediterranean Produce Trading",
-        type: "image/jpeg",
-      },
-      {
-        url: "/images/olive-oil-trading.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Premium Olive Oil Bulk Trading - Euro Negoce",
-        type: "image/jpeg",
+        type: "image/png",
       },
     ],
   },
@@ -119,7 +112,7 @@ export const metadata: Metadata = {
     title: "Euro Negoce | Premium Olive Oil Export Import | Bulk Trading",
     description:
       "Leading international trade company specializing in premium olive oil, Mediterranean produce & edible oils. Bulk trading worldwide.",
-    images: ["/images/og-euronegoce-trading.jpg"],
+    images: ["/favicon.png"],
   },
   viewport: {
     width: "device-width",
@@ -169,10 +162,11 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="canonical" href="https://www.euronegocetrade.com" />
-        <link rel="icon" href="/favicon.ico" sizes="32x32" />
-        <link rel="icon" href="/favicon.png" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32" />
+        <link rel="icon" href="/favicon.png" type="image/png" sizes="16x16" />
         <link rel="icon" href="/favicon.png" type="image/png" sizes="192x192" />
         <link rel="apple-touch-icon" href="/favicon.png" sizes="180x180" />
+        <link rel="shortcut icon" href="/favicon.png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#16a34a" />
         <meta name="format-detection" content="telephone=yes" />
