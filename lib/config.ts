@@ -2,7 +2,7 @@
 export const config = {
   // Email Configuration
   resend: {
-    apiKey: process.env.RESEND_API_KEY,
+    apiKey: process.env.RESEND_API_KEY || "",
     fromEmail: "noreply@euronegocetrade.com",
     toEmail: "contact@euronegocetrade.com",
   },
@@ -20,9 +20,9 @@ export const config = {
 
   // Verification Codes
   verification: {
-    google: process.env.GOOGLE_VERIFICATION_CODE,
-    yandex: process.env.YANDEX_VERIFICATION_CODE,
-    bing: process.env.BING_VERIFICATION_CODE,
+    google: process.env.GOOGLE_VERIFICATION_CODE || "",
+    yandex: process.env.YANDEX_VERIFICATION_CODE || "",
+    bing: process.env.BING_VERIFICATION_CODE || "",
   },
 } as const
 
@@ -30,8 +30,8 @@ export const config = {
 export function validateConfig() {
   const errors: string[] = []
 
-  if (!config.resend.apiKey) {
-    errors.push("RESEND_API_KEY is required")
+  if (!config.resend.apiKey && config.isProduction) {
+    errors.push("RESEND_API_KEY is required in production")
   }
 
   if (config.isProduction && !config.site.url.startsWith("https://")) {
@@ -39,7 +39,8 @@ export function validateConfig() {
   }
 
   if (errors.length > 0) {
-    throw new Error(`Configuration errors:\n${errors.join("\n")}`)
+    console.error("Configuration errors:", errors)
+    return false
   }
 
   return true
@@ -48,8 +49,10 @@ export function validateConfig() {
 // Runtime validation (only in development)
 if (config.isDevelopment) {
   try {
-    validateConfig()
-    console.log("✅ Configuration validated successfully")
+    const isValid = validateConfig()
+    if (isValid) {
+      console.log("✅ Configuration validated successfully")
+    }
   } catch (error) {
     console.error("❌ Configuration validation failed:", error)
   }

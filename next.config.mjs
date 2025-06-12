@@ -8,6 +8,22 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    domains: ['euronegocetrade.com', 'www.euronegocetrade.com'],
+  },
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'host',
+            value: 'euronegocetrade.com',
+          },
+        ],
+        destination: 'https://www.euronegocetrade.com/:path*',
+        permanent: true,
+      },
+    ]
   },
   async headers() {
     return [
@@ -24,8 +40,30 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization',
+          },
+        ],
+      },
     ]
   },
+  // Production optimizations
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: false,
+  trailingSlash: false,
 }
 
 export default nextConfig

@@ -12,38 +12,62 @@ export async function POST(request: Request) {
 
     // Validate required fields
     if (!name || !email || !date || !time || !topic) {
-      return Response.json(
-        {
+      return new Response(
+        JSON.stringify({
           success: false,
           error: "Missing required fields",
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-        { status: 400 },
       )
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      return Response.json(
-        {
+      return new Response(
+        JSON.stringify({
           success: false,
           error: "Invalid email format",
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-        { status: 400 },
       )
     }
 
     // Check if Resend API key is available
     if (!config.resend.apiKey) {
       console.error("RESEND_API_KEY not found in environment variables")
-      return Response.json(
-        {
+      return new Response(
+        JSON.stringify({
           success: false,
           error: "Email service not configured properly",
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-        { status: 500 },
       )
     }
+
+    // Sanitize input data
+    const sanitizedName = String(name).replace(/[<>]/g, "")
+    const sanitizedEmail = String(email).replace(/[<>]/g, "")
+    const sanitizedCompany = company ? String(company).replace(/[<>]/g, "") : ""
+    const sanitizedPhone = phone ? String(phone).replace(/[<>]/g, "") : ""
+    const sanitizedTopic = String(topic).replace(/[<>]/g, "")
+    const sanitizedMessage = message ? String(message).replace(/[<>]/g, "") : ""
+    const sanitizedTimezone = timezone ? String(timezone).replace(/[<>]/g, "") : ""
 
     // Format the date and time for display
     const formattedDate = new Date(`${date}T${time}`).toLocaleDateString("en-US", {
@@ -63,37 +87,37 @@ export async function POST(request: Request) {
     const emailData = {
       from: config.resend.fromEmail,
       to: [config.resend.toEmail],
-      reply_to: email,
-      subject: `📅 Call Scheduled: ${name} - ${topic}`,
+      reply_to: sanitizedEmail,
+      subject: `Call Scheduled: ${sanitizedName} - ${sanitizedTopic}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #4f46e5; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-            <h2 style="margin: 0;">📅 New Call Scheduled</h2>
-            <p style="margin: 5px 0 0 0;">${formattedDate} at ${formattedTime} ${timezone}</p>
+            <h2 style="margin: 0;">New Call Scheduled</h2>
+            <p style="margin: 5px 0 0 0;">${formattedDate} at ${formattedTime} ${sanitizedTimezone}</p>
           </div>
           
           <div style="padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
             <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
               <h3 style="color: #374151; margin-top: 0;">Call Details</h3>
-              <p><strong>Topic:</strong> ${topic}</p>
+              <p><strong>Topic:</strong> ${sanitizedTopic}</p>
               <p><strong>Date:</strong> ${formattedDate}</p>
-              <p><strong>Time:</strong> ${formattedTime} ${timezone}</p>
+              <p><strong>Time:</strong> ${formattedTime} ${sanitizedTimezone}</p>
             </div>
             
             <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
               <h3 style="color: #374151; margin-top: 0;">Contact Information</h3>
-              <p><strong>Name:</strong> ${name}</p>
-              <p><strong>Email:</strong> ${email}</p>
-              <p><strong>Company:</strong> ${company || "Not provided"}</p>
-              <p><strong>Phone:</strong> ${phone || "Not provided"}</p>
+              <p><strong>Name:</strong> ${sanitizedName}</p>
+              <p><strong>Email:</strong> ${sanitizedEmail}</p>
+              <p><strong>Company:</strong> ${sanitizedCompany || "Not provided"}</p>
+              <p><strong>Phone:</strong> ${sanitizedPhone || "Not provided"}</p>
             </div>
             
             ${
-              message
+              sanitizedMessage
                 ? `
             <div style="background: #f9fafb; padding: 20px; border-radius: 8px;">
               <h3 style="color: #374151; margin-top: 0;">Additional Notes</h3>
-              <p style="white-space: pre-wrap;">${message}</p>
+              <p style="white-space: pre-wrap;">${sanitizedMessage}</p>
             </div>
             `
                 : ""
@@ -125,25 +149,25 @@ export async function POST(request: Request) {
     // Send confirmation to customer
     const confirmationEmail = {
       from: config.resend.fromEmail,
-      to: [email],
-      subject: "📅 Your Call with Euro Negoce Trade is Scheduled",
+      to: [sanitizedEmail],
+      subject: "Your Call with Euro Negoce Trade is Scheduled",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: #4f46e5; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-            <h2 style="margin: 0;">📅 Your Call is Scheduled</h2>
-            <p style="margin: 5px 0 0 0;">${formattedDate} at ${formattedTime} ${timezone}</p>
+            <h2 style="margin: 0;">Your Call is Scheduled</h2>
+            <p style="margin: 5px 0 0 0;">${formattedDate} at ${formattedTime} ${sanitizedTimezone}</p>
           </div>
           
           <div style="padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
-            <p>Dear ${name},</p>
+            <p>Dear ${sanitizedName},</p>
             
             <p>Thank you for scheduling a call with Euro Negoce Trade. We have received your request and will contact you at the scheduled time.</p>
             
             <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #374151; margin-top: 0;">Call Details</h3>
-              <p><strong>Topic:</strong> ${topic}</p>
+              <p><strong>Topic:</strong> ${sanitizedTopic}</p>
               <p><strong>Date:</strong> ${formattedDate}</p>
-              <p><strong>Time:</strong> ${formattedTime} ${timezone}</p>
+              <p><strong>Time:</strong> ${formattedTime} ${sanitizedTimezone}</p>
             </div>
             
             <div style="background: #e0e7ff; padding: 15px; border-radius: 8px;">
@@ -170,9 +194,19 @@ export async function POST(request: Request) {
       body: JSON.stringify(confirmationEmail),
     })
 
-    return Response.json({ success: true, message: "Call scheduled successfully" })
+    return new Response(JSON.stringify({ success: true, message: "Call scheduled successfully" }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
   } catch (error) {
     console.error("Call scheduling error:", error)
-    return Response.json({ success: false, error: "Failed to schedule call" }, { status: 500 })
+    return new Response(JSON.stringify({ success: false, error: "Failed to schedule call" }), {
+      status: 500,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
   }
 }

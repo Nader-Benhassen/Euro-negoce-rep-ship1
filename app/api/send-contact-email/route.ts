@@ -21,12 +21,17 @@ export async function POST(request: Request) {
     // Validate required fields
     if (!name || !email || !message) {
       console.log("❌ Validation failed: Missing required fields")
-      return Response.json(
-        {
+      return new Response(
+        JSON.stringify({
           success: false,
           error: "Missing required fields: name, email, and message are required",
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-        { status: 400 },
       )
     }
 
@@ -34,70 +39,87 @@ export async function POST(request: Request) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       console.log("❌ Validation failed: Invalid email format")
-      return Response.json(
-        {
+      return new Response(
+        JSON.stringify({
           success: false,
           error: "Invalid email format",
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-        { status: 400 },
       )
     }
 
     // Check if Resend API key is available
     if (!config.resend.apiKey) {
       console.error("❌ RESEND_API_KEY not found in environment variables")
-      return Response.json(
-        {
+      return new Response(
+        JSON.stringify({
           success: false,
           error: "Email service not configured. Please contact support.",
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-        { status: 500 },
       )
     }
+
+    // Sanitize input data for HTML
+    const sanitizedName = String(name).replace(/[<>]/g, "")
+    const sanitizedEmail = String(email).replace(/[<>]/g, "")
+    const sanitizedCompany = company ? String(company).replace(/[<>]/g, "") : ""
+    const sanitizedPhone = phone ? String(phone).replace(/[<>]/g, "") : ""
+    const sanitizedMessage = String(message).replace(/[<>]/g, "")
+    const sanitizedProduct = selectedProduct ? String(selectedProduct).replace(/[<>]/g, "") : ""
 
     const emailData = {
       from: config.resend.fromEmail,
       to: [config.resend.toEmail],
-      reply_to: email,
-      subject: `🔔 New Contact: ${name} - ${company || "Individual"}`,
+      reply_to: sanitizedEmail,
+      subject: `New Contact: ${sanitizedName} - ${sanitizedCompany || "Individual"}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px;">
           <div style="background: #16a34a; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-            <h2 style="margin: 0;">🔔 New Contact Form Submission</h2>
+            <h2 style="margin: 0;">New Contact Form Submission</h2>
             <p style="margin: 5px 0 0 0; opacity: 0.9;">Euro Negoce Trade Website</p>
           </div>
           
           <div style="padding: 20px;">
             <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="color: #374151; margin-top: 0;">👤 Contact Information</h3>
+              <h3 style="color: #374151; margin-top: 0;">Contact Information</h3>
               <table style="width: 100%; border-collapse: collapse;">
-                <tr><td style="padding: 5px 0; font-weight: bold;">Name:</td><td style="padding: 5px 0;">${name}</td></tr>
-                <tr><td style="padding: 5px 0; font-weight: bold;">Email:</td><td style="padding: 5px 0;"><a href="mailto:${email}">${email}</a></td></tr>
-                <tr><td style="padding: 5px 0; font-weight: bold;">Company:</td><td style="padding: 5px 0;">${company || "Not provided"}</td></tr>
-                <tr><td style="padding: 5px 0; font-weight: bold;">Phone:</td><td style="padding: 5px 0;">${phone || "Not provided"}</td></tr>
-                ${selectedProduct ? `<tr><td style="padding: 5px 0; font-weight: bold;">Product Interest:</td><td style="padding: 5px 0;">${selectedProduct}</td></tr>` : ""}
+                <tr><td style="padding: 5px 0; font-weight: bold;">Name:</td><td style="padding: 5px 0;">${sanitizedName}</td></tr>
+                <tr><td style="padding: 5px 0; font-weight: bold;">Email:</td><td style="padding: 5px 0;"><a href="mailto:${sanitizedEmail}">${sanitizedEmail}</a></td></tr>
+                <tr><td style="padding: 5px 0; font-weight: bold;">Company:</td><td style="padding: 5px 0;">${sanitizedCompany || "Not provided"}</td></tr>
+                <tr><td style="padding: 5px 0; font-weight: bold;">Phone:</td><td style="padding: 5px 0;">${sanitizedPhone || "Not provided"}</td></tr>
+                ${sanitizedProduct ? `<tr><td style="padding: 5px 0; font-weight: bold;">Product Interest:</td><td style="padding: 5px 0;">${sanitizedProduct}</td></tr>` : ""}
               </table>
             </div>
             
             <div style="background: #f9fafb; padding: 20px; border-radius: 8px;">
-              <h3 style="color: #374151; margin-top: 0;">💬 Message</h3>
+              <h3 style="color: #374151; margin-top: 0;">Message</h3>
               <div style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #16a34a;">
-                <p style="white-space: pre-wrap; margin: 0;">${message}</p>
+                <p style="white-space: pre-wrap; margin: 0;">${sanitizedMessage}</p>
               </div>
             </div>
             
             <div style="margin-top: 20px; padding: 15px; background: #dcfce7; border-radius: 8px; border-left: 4px solid #16a34a;">
               <p style="margin: 0; color: #166534;">
-                <strong>📧 Quick Reply:</strong> Reply directly to this email to respond to ${name}
+                <strong>Quick Reply:</strong> Reply directly to this email to respond to ${sanitizedName}
               </p>
             </div>
           </div>
           
           <div style="background: #f9fafb; padding: 15px; border-radius: 0 0 8px 8px; border-top: 1px solid #e5e7eb;">
             <p style="font-size: 12px; color: #6b7280; margin: 0;">
-              📅 Sent: ${new Date().toLocaleString()}<br>
-              🌐 From: Euro Negoce Trade Website<br>
-              🔍 IP: ${request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "Unknown"}
+              Sent: ${new Date().toLocaleString()}<br>
+              From: Euro Negoce Trade Website
             </p>
           </div>
         </div>
@@ -105,8 +127,6 @@ export async function POST(request: Request) {
     }
 
     console.log("📧 Attempting to send email via Resend...")
-    console.log("To:", emailData.to)
-    console.log("From:", emailData.from)
 
     // Send email using Resend API with timeout
     const controller = new AbortController()
@@ -133,13 +153,18 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       console.error("❌ Resend API error:", responseData)
-      return Response.json(
-        {
+      return new Response(
+        JSON.stringify({
           success: false,
           error: `Email delivery failed: ${responseData.message || "Unknown error"}`,
           details: config.isDevelopment ? responseData : undefined,
+        }),
+        {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-        { status: 500 },
       )
     }
 
@@ -149,28 +174,28 @@ export async function POST(request: Request) {
     try {
       const confirmationEmail = {
         from: config.resend.fromEmail,
-        to: [email],
-        subject: "✅ Message Received - Euro Negoce Trade",
+        to: [sanitizedEmail],
+        subject: "Message Received - Euro Negoce Trade",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: #16a34a; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-              <h2 style="margin: 0;">✅ Thank you for contacting Euro Negoce Trade</h2>
+              <h2 style="margin: 0;">Thank you for contacting Euro Negoce Trade</h2>
             </div>
             
             <div style="padding: 20px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
-              <p>Dear ${name},</p>
+              <p>Dear ${sanitizedName},</p>
               
               <p>Thank you for your inquiry. We have received your message and our team will contact you within 24 hours.</p>
               
               <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3 style="color: #374151; margin-top: 0;">📋 Your Message Summary</h3>
-                <p><strong>Subject:</strong> ${selectedProduct ? `Inquiry about ${selectedProduct}` : "General Inquiry"}</p>
+                <h3 style="color: #374151; margin-top: 0;">Your Message Summary</h3>
+                <p><strong>Subject:</strong> ${sanitizedProduct ? `Inquiry about ${sanitizedProduct}` : "General Inquiry"}</p>
                 <p><strong>Submitted:</strong> ${new Date().toLocaleString()}</p>
               </div>
               
               <div style="background: #dcfce7; padding: 15px; border-radius: 8px;">
                 <p style="margin: 0; color: #166534;">
-                  <strong>📞 Contact Information:</strong><br>
+                  <strong>Contact Information:</strong><br>
                   Email: euronegoce.mail@gmail.com<br>
                   Phone: +33 1 48 11 65 91<br>
                   Website: ${config.site.url}
@@ -200,31 +225,49 @@ export async function POST(request: Request) {
       )
     }
 
-    return Response.json({
-      success: true,
-      message: "Your message has been sent successfully! We will contact you within 24 hours.",
-      emailId: responseData.id,
-    })
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Your message has been sent successfully! We will contact you within 24 hours.",
+        emailId: responseData.id,
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    )
   } catch (error) {
     console.error("❌ Email sending error:", error)
 
     if (error instanceof Error && error.name === "AbortError") {
-      return Response.json(
-        {
+      return new Response(
+        JSON.stringify({
           success: false,
           error: "Email sending timed out. Please try again or contact us directly.",
+        }),
+        {
+          status: 408,
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-        { status: 408 },
       )
     }
 
-    return Response.json(
-      {
+    return new Response(
+      JSON.stringify({
         success: false,
         error: "An unexpected error occurred. Please try again or contact us directly at contact@euronegocetrade.com",
         details: config.isDevelopment ? error : undefined,
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
       },
-      { status: 500 },
     )
   }
 }
