@@ -4,24 +4,39 @@ import { Resend } from "resend"
 const resendApiKey = process.env.RESEND_API_KEY
 let resend: Resend | null = null
 
+console.log("🔧 Initializing Resend SDK...")
+console.log("- API Key exists:", !!resendApiKey)
+console.log("- API Key length:", resendApiKey?.length || 0)
+console.log("- API Key prefix:", resendApiKey?.substring(0, 12) + "..." || "none")
+
 try {
   if (resendApiKey) {
     resend = new Resend(resendApiKey)
+    console.log("✅ Resend SDK initialized successfully")
+  } else {
+    console.error("❌ No API key found - Resend SDK not initialized")
   }
 } catch (error) {
-  console.error("Failed to initialize Resend:", error)
+  console.error("❌ Failed to initialize Resend SDK:", error)
+  console.error("Error details:", {
+    name: error instanceof Error ? error.name : "Unknown",
+    message: error instanceof Error ? error.message : String(error),
+    stack: error instanceof Error ? error.stack : "No stack trace",
+  })
 }
 
-// Email configuration - using the same email for both sending and receiving
-const FROM_EMAIL = "contact@euronegocetrade.com" // Corrected to use contact@ as sender
-const TO_EMAIL = "contact@euronegocetrade.com" // Same email for receiving
+// Email configuration
+const FROM_EMAIL = "contact@euronegocetrade.com"
+const TO_EMAIL = "contact@euronegocetrade.com"
 
 // Function to verify the correct API key is loaded
 export function verifyApiKey() {
+  console.log("🔑 Verifying API key...")
+
   const expectedKey = "re_5FM8T24R_5CiKQSRbHYX6FmDsBoEpUeTz"
   const isCorrectKey = resendApiKey === expectedKey
 
-  return {
+  const verification = {
     hasApiKey: !!resendApiKey,
     keyLength: resendApiKey?.length || 0,
     keyPrefix: resendApiKey?.substring(0, 12) + "..." || "none",
@@ -30,6 +45,9 @@ export function verifyApiKey() {
     message: isCorrectKey ? "✅ Correct API key is loaded" : "❌ API key mismatch or missing",
     resendInitialized: !!resend,
   }
+
+  console.log("🔑 API Key verification result:", verification)
+  return verification
 }
 
 export async function sendEmail({
@@ -47,20 +65,29 @@ export async function sendEmail({
   text?: string
   replyTo?: string
 }) {
-  // Verify API key and Resend initialization
-  const keyVerification = verifyApiKey()
-  console.log("🔑 API Key Verification:", keyVerification)
-
-  if (!keyVerification.isCorrectKey) {
-    throw new Error(`API key verification failed: ${keyVerification.message}`)
-  }
-
-  if (!resend) {
-    throw new Error("Resend SDK not initialized properly")
-  }
+  console.log("📧 Starting email send process...")
 
   try {
-    // Prepare email data according to Resend SDK requirements
+    // Step 1: Verify API key and Resend initialization
+    console.log("📧 Step 1: Verifying configuration...")
+    const keyVerification = verifyApiKey()
+
+    if (!keyVerification.isCorrectKey) {
+      const error = `API key verification failed: ${keyVerification.message}`
+      console.error("❌ Step 1 failed:", error)
+      throw new Error(error)
+    }
+
+    if (!resend) {
+      const error = "Resend SDK not initialized properly"
+      console.error("❌ Step 1 failed:", error)
+      throw new Error(error)
+    }
+
+    console.log("✅ Step 1 completed: Configuration verified")
+
+    // Step 2: Prepare email data
+    console.log("📧 Step 2: Preparing email data...")
     const emailData = {
       from: from,
       to: Array.isArray(to) ? to : [to],
@@ -70,29 +97,48 @@ export async function sendEmail({
       ...(replyTo && { reply_to: replyTo }),
     }
 
-    console.log("📧 Sending email with Resend SDK:")
-    console.log("- From:", emailData.from)
-    console.log("- To:", emailData.to)
-    console.log("- Subject:", emailData.subject)
-    console.log("- Has HTML:", !!emailData.html)
-    console.log("- Has Reply-To:", !!replyTo)
+    console.log("📧 Email data prepared:", {
+      from: emailData.from,
+      to: emailData.to,
+      subject: emailData.subject,
+      hasHtml: !!emailData.html,
+      htmlLength: emailData.html?.length || 0,
+      hasText: !!emailData.text,
+      hasReplyTo: !!replyTo,
+    })
 
-    // Send email using Resend SDK
+    console.log("✅ Step 2 completed: Email data prepared")
+
+    // Step 3: Send email using Resend SDK
+    console.log("📧 Step 3: Sending email via Resend SDK...")
+    console.log("📧 About to call resend.emails.send()...")
+
     const response = await resend.emails.send(emailData)
 
-    console.log("✅ Email sent successfully via Resend SDK:")
-    console.log("- Response:", JSON.stringify(response, null, 2))
+    console.log("✅ Step 3 completed: Email sent successfully!")
+    console.log("📧 Resend response:", JSON.stringify(response, null, 2))
 
     return { success: true, data: response }
   } catch (error) {
-    console.error("❌ Email sending failed:")
-    console.error("- Error:", error)
-    console.error("- Error type:", typeof error)
-    console.error("- Error name:", error instanceof Error ? error.constructor.name : "Unknown")
+    console.error("❌ Email sending failed at some step:")
+    console.error("❌ Error type:", typeof error)
+    console.error("❌ Error constructor:", error instanceof Error ? error.constructor.name : "Unknown")
 
     if (error instanceof Error) {
-      console.error("- Error message:", error.message)
-      console.error("- Error stack:", error.stack)
+      console.error("❌ Error name:", error.name)
+      console.error("❌ Error message:", error.message)
+      console.error("❌ Error stack:", error.stack)
+    } else {
+      console.error("❌ Non-Error object thrown:", error)
+    }
+
+    // Additional debugging for specific error types
+    if (error && typeof error === "object" && "response" in error) {
+      console.error("❌ HTTP Response error:", error.response)
+    }
+
+    if (error && typeof error === "object" && "status" in error) {
+      console.error("❌ Status code:", error.status)
     }
 
     // Re-throw with more context
@@ -100,13 +146,17 @@ export async function sendEmail({
   }
 }
 
-// Enhanced test function
+// Enhanced test function with extensive logging
 export async function testEmailConfig() {
-  const keyVerification = verifyApiKey()
-  console.log("🧪 Testing email configuration...")
+  console.log("🧪 Starting email configuration test...")
 
   try {
+    // Step 1: Verify configuration
+    console.log("🧪 Test Step 1: Verifying configuration...")
+    const keyVerification = verifyApiKey()
+
     if (!keyVerification.isCorrectKey) {
+      console.error("❌ Test failed at Step 1: Incorrect API key")
       return {
         success: false,
         message: "Incorrect API key configured",
@@ -115,6 +165,7 @@ export async function testEmailConfig() {
     }
 
     if (!resend) {
+      console.error("❌ Test failed at Step 1: Resend not initialized")
       return {
         success: false,
         message: "Resend SDK not initialized",
@@ -122,12 +173,13 @@ export async function testEmailConfig() {
       }
     }
 
-    console.log("📧 Sending test email...")
+    console.log("✅ Test Step 1 completed: Configuration verified")
 
-    // Send test email using your verified domain
-    const testResult = await resend.emails.send({
-      from: FROM_EMAIL, // Using contact@euronegocetrade.com as sender
-      to: [TO_EMAIL], // Sending to contact@euronegocetrade.com
+    // Step 2: Prepare test email
+    console.log("🧪 Test Step 2: Preparing test email...")
+    const testEmailData = {
+      from: FROM_EMAIL,
+      to: [TO_EMAIL],
       subject: `🧪 Email Test - ${new Date().toISOString()}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -153,9 +205,25 @@ export async function testEmailConfig() {
           </p>
         </div>
       `,
+    }
+
+    console.log("🧪 Test email data:", {
+      from: testEmailData.from,
+      to: testEmailData.to,
+      subject: testEmailData.subject,
+      hasHtml: !!testEmailData.html,
     })
 
-    console.log("✅ Test email sent successfully:", testResult)
+    console.log("✅ Test Step 2 completed: Test email prepared")
+
+    // Step 3: Send test email
+    console.log("🧪 Test Step 3: Sending test email...")
+    console.log("🧪 About to call resend.emails.send() for test...")
+
+    const testResult = await resend.emails.send(testEmailData)
+
+    console.log("✅ Test Step 3 completed: Test email sent successfully!")
+    console.log("🧪 Test result:", JSON.stringify(testResult, null, 2))
 
     return {
       success: true,
@@ -164,13 +232,23 @@ export async function testEmailConfig() {
       testResult,
     }
   } catch (error) {
-    console.error("❌ Email test failed:", error)
+    console.error("❌ Email configuration test failed:")
+    console.error("❌ Error type:", typeof error)
+    console.error("❌ Error constructor:", error instanceof Error ? error.constructor.name : "Unknown")
+
+    if (error instanceof Error) {
+      console.error("❌ Error name:", error.name)
+      console.error("❌ Error message:", error.message)
+      console.error("❌ Error stack:", error.stack)
+    } else {
+      console.error("❌ Non-Error object thrown:", error)
+    }
 
     return {
       success: false,
       message: "Email configuration test failed",
       error: error instanceof Error ? error.message : String(error),
-      keyVerification,
+      keyVerification: verifyApiKey(),
     }
   }
 }

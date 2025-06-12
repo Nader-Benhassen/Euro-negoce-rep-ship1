@@ -6,12 +6,14 @@ export async function POST(request: Request) {
   console.log("🚀 Contact form submission started at:", new Date().toISOString())
 
   try {
-    // Verify API key first
+    // Step 1: Verify API key first
+    console.log("🚀 Step 1: Verifying API key configuration...")
     const keyVerification = verifyApiKey()
-    console.log("🔑 API Key Verification:", keyVerification)
 
     if (!keyVerification.isCorrectKey || !keyVerification.resendInitialized) {
-      console.error("❌ Email service not properly configured")
+      console.error("❌ Step 1 failed: Email service not properly configured")
+      console.error("❌ Key verification details:", keyVerification)
+
       return NextResponse.json(
         {
           success: false,
@@ -25,23 +27,35 @@ export async function POST(request: Request) {
       )
     }
 
+    console.log("✅ Step 1 completed: API key verified")
+
+    // Step 2: Parse and validate form data
+    console.log("🚀 Step 2: Parsing form data...")
     const body = await request.json()
+    console.log("🚀 Raw form data received:", JSON.stringify(body, null, 2))
+
     const { name, email, company, phone, message, selectedProduct } = body
 
     // Validation
     if (!name?.trim()) {
+      console.error("❌ Step 2 failed: Name validation failed")
       return NextResponse.json({ success: false, error: "Name is required" }, { status: 400 })
     }
 
     if (!email?.trim() || !email.includes("@")) {
+      console.error("❌ Step 2 failed: Email validation failed")
       return NextResponse.json({ success: false, error: "Valid email is required" }, { status: 400 })
     }
 
     if (!message?.trim()) {
+      console.error("❌ Step 2 failed: Message validation failed")
       return NextResponse.json({ success: false, error: "Message is required" }, { status: 400 })
     }
 
-    // Sanitize inputs
+    console.log("✅ Step 2 completed: Form data validated")
+
+    // Step 3: Sanitize inputs
+    console.log("🚀 Step 3: Sanitizing form data...")
     const sanitizedData = {
       name: String(name).trim().replace(/[<>]/g, ""),
       email: String(email).trim().replace(/[<>]/g, ""),
@@ -51,9 +65,19 @@ export async function POST(request: Request) {
       product: selectedProduct ? String(selectedProduct).trim().replace(/[<>]/g, "") : "",
     }
 
-    console.log("✅ Form validation and sanitization completed")
+    console.log("🚀 Sanitized data:", {
+      name: sanitizedData.name,
+      email: sanitizedData.email,
+      company: sanitizedData.company || "Not provided",
+      phone: sanitizedData.phone || "Not provided",
+      messageLength: sanitizedData.message.length,
+      product: sanitizedData.product || "Not specified",
+    })
 
-    // Create email content
+    console.log("✅ Step 3 completed: Form data sanitized")
+
+    // Step 4: Create email content
+    console.log("🚀 Step 4: Creating email content...")
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px;">
         <div style="background: #16a34a; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
@@ -99,19 +123,28 @@ export async function POST(request: Request) {
       </div>
     `
 
-    console.log("📧 Attempting to send email via Resend SDK...")
+    console.log("🚀 Email content created, length:", htmlContent.length)
+    console.log("✅ Step 4 completed: Email content created")
 
-    // Send email using Resend SDK
+    // Step 5: Send email using Resend SDK
+    console.log("🚀 Step 5: Attempting to send email via Resend SDK...")
+    console.log("🚀 Email parameters:", {
+      subject: `🔔 New Contact: ${sanitizedData.name}${sanitizedData.company ? ` - ${sanitizedData.company}` : ""}`,
+      replyTo: sanitizedData.email,
+      htmlLength: htmlContent.length,
+    })
+
     const result = await sendEmail({
       subject: `🔔 New Contact: ${sanitizedData.name}${sanitizedData.company ? ` - ${sanitizedData.company}` : ""}`,
       html: htmlContent,
       replyTo: sanitizedData.email,
     })
 
-    console.log("✅ Email sent successfully via Resend SDK")
+    console.log("✅ Step 5 completed: Email sent successfully via Resend SDK")
+    console.log("🚀 Send result:", JSON.stringify(result, null, 2))
 
     const totalTime = Date.now() - startTime
-    console.log(`🎉 Contact form submission completed in ${totalTime}ms`)
+    console.log(`🎉 Contact form submission completed successfully in ${totalTime}ms`)
 
     return NextResponse.json({
       success: true,
@@ -126,7 +159,18 @@ export async function POST(request: Request) {
   } catch (error) {
     const totalTime = Date.now() - startTime
     console.error("❌ Contact form submission failed:")
-    console.error("Error:", error)
+    console.error("❌ Error occurred at:", new Date().toISOString())
+    console.error("❌ Processing time before error:", totalTime + "ms")
+    console.error("❌ Error type:", typeof error)
+    console.error("❌ Error constructor:", error instanceof Error ? error.constructor.name : "Unknown")
+
+    if (error instanceof Error) {
+      console.error("❌ Error name:", error.name)
+      console.error("❌ Error message:", error.message)
+      console.error("❌ Error stack:", error.stack)
+    } else {
+      console.error("❌ Non-Error object thrown:", error)
+    }
 
     return NextResponse.json(
       {
