@@ -8,7 +8,6 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    domains: ['euronegocetrade.com', 'www.euronegocetrade.com'],
   },
   async redirects() {
     return [
@@ -25,44 +24,9 @@ const nextConfig = {
       },
     ]
   },
-  async headers() {
-    return [
-      {
-        source: '/google*.html',
-        headers: [
-          {
-            key: 'Content-Type',
-            value: 'text/html; charset=utf-8',
-          },
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/api/:path*',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*',
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS',
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization',
-          },
-        ],
-      },
-    ]
-  },
-  // Production optimizations
+  // Remove all header configurations to avoid route parsing issues
   compress: true,
   poweredByHeader: false,
-  generateEtags: false,
   trailingSlash: false,
 }
 

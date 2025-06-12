@@ -1,7 +1,6 @@
 User-agent: *
 Allow: /
 
-# Sitemap
 Sitemap: https://www.euronegocetrade.com/sitemap.xml
 
 # Disallow admin areas (if any)
