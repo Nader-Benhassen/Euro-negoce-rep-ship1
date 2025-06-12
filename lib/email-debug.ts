@@ -4,84 +4,119 @@ const resendApiKey = process.env.RESEND_API_KEY
 const resend = resendApiKey ? new Resend(resendApiKey) : null
 
 export async function debugEmailConfig() {
-  const debug = {
+  const debugInfo = {
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-    apiKey: {
-      exists: !!resendApiKey,
-      length: resendApiKey?.length || 0,
-      prefix: resendApiKey?.substring(0, 8) + "..." || "none",
+    environment: {
+      nodeEnv: process.env.NODE_ENV,
+      hasResendKey: !!resendApiKey,
+      resendKeyLength: resendApiKey?.length || 0,
+      resendKeyPrefix: resendApiKey ? `${resendApiKey.substring(0, 8)}...` : "NOT_SET",
     },
-    resendInstance: !!resend,
-    errors: [] as string[],
+    tests: [] as any[],
   }
 
-  // Test API key validity
+  // Test 1: Environment check
   if (!resendApiKey) {
-    debug.errors.push("RESEND_API_KEY environment variable not found")
-    return debug
+    debugInfo.tests.push({
+      test: "Environment Variables",
+      status: "❌ FAIL",
+      issue: "RESEND_API_KEY is not set",
+      solution: "Add RESEND_API_KEY to your environment variables",
+    })
+    return debugInfo
   }
 
-  if (!resendApiKey.startsWith("re_")) {
-    debug.errors.push("API key doesn't start with 're_' - invalid format")
-    return debug
-  }
+  debugInfo.tests.push({
+    test: "Environment Variables",
+    status: "✅ PASS",
+    message: "RESEND_API_KEY is configured",
+  })
 
+  // Test 2: API connectivity
   try {
-    // Test with a simple API call
-    const testResult = await resend?.emails.send({
-      from: "onboarding@resend.dev", // Use Resend's default domain for testing
-      to: "contact@euronegocetrade.com",
-      subject: "Email System Test - " + new Date().toISOString(),
-      html: `
-        <h2>Email System Test</h2>
-        <p>This is a test email to verify the email system is working.</p>
-        <p>Sent at: ${new Date().toLocaleString()}</p>
-        <p>Environment: ${process.env.NODE_ENV}</p>
-      `,
+    const testResponse = await fetch("https://api.resend.com/domains", {
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+      },
     })
 
-    return {
-      ...debug,
-      testResult,
-      success: true,
+    if (testResponse.ok) {
+      const domains = await testResponse.json()
+      debugInfo.tests.push({
+        test: "Resend API Connection",
+        status: "✅ PASS",
+        message: "Successfully connected to Resend API",
+        domains: domains.data?.map((d: any) => ({ name: d.name, status: d.status })) || [],
+      })
+    } else {
+      const error = await testResponse.json()
+      debugInfo.tests.push({
+        test: "Resend API Connection",
+        status: "❌ FAIL",
+        issue: `API returned ${testResponse.status}: ${error.message}`,
+        solution: "Check if your RESEND_API_KEY is valid",
+      })
     }
   } catch (error) {
-    debug.errors.push(`API test failed: ${error instanceof Error ? error.message : String(error)}`)
-    return {
-      ...debug,
-      error,
-      success: false,
-    }
+    debugInfo.tests.push({
+      test: "Resend API Connection",
+      status: "❌ FAIL",
+      issue: `Network error: ${error instanceof Error ? error.message : String(error)}`,
+      solution: "Check internet connectivity or firewall settings",
+    })
   }
+
+  return debugInfo
 }
 
 export async function sendTestEmail() {
+  if (!resend) {
+    return {
+      success: false,
+      message: "Resend not initialized",
+      error: "RESEND_API_KEY not configured",
+    }
+  }
+
   try {
-    if (!resend) {
-      throw new Error("Resend not initialized - check API key")
+    const testEmail = {
+      from: "onboarding@resend.dev",
+      to: ["contact@euronegocetrade.com"],
+      subject: `🧪 Email Test - ${new Date().toLocaleString()}`,
+      html: `
+        <h2>🧪 Email System Test</h2>
+        <p><strong>This is a test email from your Euro Negoce website.</strong></p>
+        <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Test Details:</strong></p>
+          <ul>
+            <li>Time: ${new Date().toLocaleString()}</li>
+            <li>From: Euro Negoce Trade Website</li>
+            <li>Test ID: ${Math.random().toString(36).substring(7)}</li>
+          </ul>
+        </div>
+        <p>If you receive this email, your email system is working correctly! ✅</p>
+        <hr>
+        <p style="font-size: 12px; color: #666;">
+          This email was sent from your website's email testing system.
+        </p>
+      `,
     }
 
-    const result = await resend.emails.send({
-      from: "onboarding@resend.dev", // Use Resend's verified domain
-      to: "contact@euronegocetrade.com",
-      subject: "Test Email from Euro Negoce Website",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #16a34a;">Test Email Successful!</h2>
-          <p>This test email confirms that your email system is working correctly.</p>
-          <p><strong>Sent at:</strong> ${new Date().toLocaleString()}</p>
-          <p><strong>From:</strong> Euro Negoce Website Email System</p>
-          <p><strong>API Key Status:</strong> Valid and working</p>
-        </div>
-      `,
-    })
+    const emailResult = await resend.emails.send(testEmail)
 
-    return { success: true, result }
+    return {
+      success: true,
+      message: "Test email sent successfully",
+      emailId: emailResult.data?.id,
+      checkInstructions: "Check contact@euronegocetrade.com inbox and spam folder",
+      result: emailResult,
+    }
   } catch (error) {
     return {
       success: false,
+      message: "Failed to send test email",
       error: error instanceof Error ? error.message : String(error),
+      solution: "Check API key and domain configuration",
     }
   }
 }

@@ -67,3 +67,41 @@ export async function sendEmail({
     throw error
   }
 }
+
+// Test function to verify email configuration
+export async function testEmailConfig() {
+  try {
+    if (!resend) {
+      return {
+        success: false,
+        message: "Resend API key not configured",
+        apiKeyConfigured: !!resendApiKey,
+        apiKeyLength: resendApiKey?.length || 0,
+      }
+    }
+
+    // Test the API key with a simple ping
+    const pingResult = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: TO_EMAIL,
+      subject: "Email System Test",
+      html: "<p>This is a test email to verify the email system is working.</p>",
+    })
+
+    return {
+      success: true,
+      message: "Email configuration is valid",
+      apiKeyConfigured: !!resendApiKey,
+      apiKeyLength: resendApiKey?.length || 0,
+      pingResult,
+    }
+  } catch (error) {
+    return {
+      success: false,
+      message: "Email configuration test failed",
+      error: error instanceof Error ? error.message : String(error),
+      apiKeyConfigured: !!resendApiKey,
+      apiKeyLength: resendApiKey?.length || 0,
+    }
+  }
+}
