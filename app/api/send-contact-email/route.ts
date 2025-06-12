@@ -2,22 +2,32 @@ import { NextResponse } from "next/server"
 import { sendEmail } from "@/lib/email"
 
 export async function POST(request: Request) {
+  const startTime = Date.now()
+  console.log("🚀 Contact form submission started at:", new Date().toISOString())
+
   try {
     const body = await request.json()
+    console.log("📝 Form data received:", JSON.stringify(body, null, 2))
+
     const { name, email, company, phone, message, selectedProduct } = body
 
     // Enhanced validation
     if (!name || !name.trim()) {
+      console.log("❌ Validation failed: Name missing")
       return NextResponse.json({ success: false, error: "Name is required" }, { status: 400 })
     }
 
     if (!email || !email.trim() || !email.includes("@")) {
+      console.log("❌ Validation failed: Invalid email")
       return NextResponse.json({ success: false, error: "Valid email is required" }, { status: 400 })
     }
 
     if (!message || !message.trim()) {
+      console.log("❌ Validation failed: Message missing")
       return NextResponse.json({ success: false, error: "Message is required" }, { status: 400 })
     }
+
+    console.log("✅ Form validation passed")
 
     // Sanitize inputs
     const sanitizedName = String(name).trim().replace(/[<>]/g, "")
@@ -26,6 +36,8 @@ export async function POST(request: Request) {
     const sanitizedPhone = phone ? String(phone).trim().replace(/[<>]/g, "") : ""
     const sanitizedMessage = String(message).trim().replace(/[<>]/g, "")
     const sanitizedProduct = selectedProduct ? String(selectedProduct).trim().replace(/[<>]/g, "") : ""
+
+    console.log("✅ Input sanitization completed")
 
     // Create email content
     const htmlContent = `
@@ -53,16 +65,20 @@ export async function POST(request: Request) {
               <p style="white-space: pre-wrap; margin: 0;">${sanitizedMessage}</p>
             </div>
           </div>
-        </div>
-        
-        <div style="background: #f9fafb; padding: 15px; border-radius: 0 0 8px 8px; border-top: 1px solid #e5e7eb;">
-          <p style="font-size: 12px; color: #6b7280; margin: 0;">
-            Sent: ${new Date().toLocaleString()}<br>
-            From: Euro Negoce Trade Website
-          </p>
+          
+          <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-top: 20px;">
+            <p style="margin: 0; color: #0369a1; font-size: 12px;">
+              <strong>Submission Details:</strong><br>
+              Timestamp: ${new Date().toLocaleString()}<br>
+              Processing Time: ${Date.now() - startTime}ms<br>
+              User Agent: ${request.headers.get("user-agent") || "Unknown"}
+            </p>
+          </div>
         </div>
       </div>
     `
+
+    console.log("📧 Attempting to send email to contact@euronegocetrade.com")
 
     // Send email to contact@euronegocetrade.com
     const result = await sendEmail({
@@ -71,8 +87,11 @@ export async function POST(request: Request) {
       replyTo: sanitizedEmail,
     })
 
+    console.log("✅ Main email sent successfully")
+
     // Send confirmation to customer
     try {
+      console.log("📧 Sending confirmation email to customer")
       await sendEmail({
         to: sanitizedEmail,
         subject: "Thank you for contacting Euro Negoce Trade",
@@ -107,22 +126,39 @@ export async function POST(request: Request) {
           </div>
         `,
       })
+      console.log("✅ Confirmation email sent successfully")
     } catch (confirmError) {
-      console.warn("Failed to send confirmation email:", confirmError)
+      console.warn("⚠️ Failed to send confirmation email:", confirmError)
       // Don't fail the request if confirmation email fails
     }
+
+    const totalTime = Date.now() - startTime
+    console.log(`🎉 Contact form submission completed successfully in ${totalTime}ms`)
 
     return NextResponse.json({
       success: true,
       message: "Your message has been sent successfully! We will contact you within 24 hours.",
+      debug: {
+        processingTime: totalTime,
+        timestamp: new Date().toISOString(),
+      },
     })
   } catch (error) {
-    console.error("Contact form submission error:", error)
+    const totalTime = Date.now() - startTime
+    console.error("❌ Contact form submission failed:")
+    console.error("Error:", error)
+    console.error("Processing time:", totalTime + "ms")
 
     return NextResponse.json(
       {
         success: false,
         error: "Failed to send your message. Please try again or contact us directly at contact@euronegocetrade.com",
+        debug: {
+          processingTime: totalTime,
+          timestamp: new Date().toISOString(),
+          errorType: error instanceof Error ? error.constructor.name : typeof error,
+          errorMessage: error instanceof Error ? error.message : String(error),
+        },
       },
       { status: 500 },
     )
