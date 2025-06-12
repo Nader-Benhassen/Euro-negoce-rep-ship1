@@ -8,20 +8,21 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    domains: ['euronegocetrade.com', 'www.euronegocetrade.com'],
   },
-  async redirects() {
+  async headers() {
     return [
       {
-        source: '/:path*',
-        has: [
+        source: '/google*.html',
+        headers: [
           {
-            type: 'host',
-            value: 'euronegocetrade.com',
+            key: 'Content-Type',
+            value: 'text/html; charset=utf-8',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
-        destination: 'https://www.euronegocetrade.com/:path*',
-        permanent: true,
       },
     ]
   },

@@ -1,14 +1,22 @@
+import { config, validateConfig } from "@/lib/config"
+
 export async function POST(request: Request) {
   try {
+    // Validate configuration on each request in development
+    if (config.isDevelopment) {
+      validateConfig()
+    }
+
     const body = await request.json()
     const { name, email, company, phone, message, selectedProduct } = body
 
-    // Enhanced logging
+    // Enhanced logging (safe for production)
     console.log("=== EMAIL SEND ATTEMPT ===")
     console.log("Timestamp:", new Date().toISOString())
     console.log("From:", email)
     console.log("Name:", name)
-    console.log("Has Resend Key:", !!process.env.RESEND_API_KEY)
+    console.log("Environment:", process.env.NODE_ENV)
+    console.log("Has Resend Key:", !!config.resend.apiKey)
 
     // Validate required fields
     if (!name || !email || !message) {
@@ -36,7 +44,7 @@ export async function POST(request: Request) {
     }
 
     // Check if Resend API key is available
-    if (!process.env.RESEND_API_KEY) {
+    if (!config.resend.apiKey) {
       console.error("❌ RESEND_API_KEY not found in environment variables")
       return Response.json(
         {
@@ -48,8 +56,8 @@ export async function POST(request: Request) {
     }
 
     const emailData = {
-      from: "noreply@euronegocetrade.com",
-      to: ["contact@euronegocetrade.com"],
+      from: config.resend.fromEmail,
+      to: [config.resend.toEmail],
       reply_to: email,
       subject: `🔔 New Contact: ${name} - ${company || "Individual"}`,
       html: `
@@ -102,12 +110,12 @@ export async function POST(request: Request) {
 
     // Send email using Resend API with timeout
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        Authorization: `Bearer ${config.resend.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(emailData),
@@ -119,7 +127,9 @@ export async function POST(request: Request) {
     const responseData = await response.json()
 
     console.log("📧 Resend API Response Status:", response.status)
-    console.log("📧 Resend API Response:", responseData)
+    if (config.isDevelopment) {
+      console.log("📧 Resend API Response:", responseData)
+    }
 
     if (!response.ok) {
       console.error("❌ Resend API error:", responseData)
@@ -127,7 +137,7 @@ export async function POST(request: Request) {
         {
           success: false,
           error: `Email delivery failed: ${responseData.message || "Unknown error"}`,
-          details: responseData,
+          details: config.isDevelopment ? responseData : undefined,
         },
         { status: 500 },
       )
@@ -135,10 +145,10 @@ export async function POST(request: Request) {
 
     console.log("✅ Email sent successfully! ID:", responseData.id)
 
-    // Send confirmation email to customer (optional, don't fail if this fails)
+    // Send confirmation email to customer
     try {
       const confirmationEmail = {
-        from: "noreply@euronegocetrade.com",
+        from: config.resend.fromEmail,
         to: [email],
         subject: "✅ Message Received - Euro Negoce Trade",
         html: `
@@ -163,7 +173,7 @@ export async function POST(request: Request) {
                   <strong>📞 Contact Information:</strong><br>
                   Email: euronegoce.mail@gmail.com<br>
                   Phone: +33 1 48 11 65 91<br>
-                  Website: www.euronegocetrade.com
+                  Website: ${config.site.url}
                 </p>
               </div>
               
@@ -176,7 +186,7 @@ export async function POST(request: Request) {
       await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          Authorization: `Bearer ${config.resend.apiKey}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(confirmationEmail),
@@ -184,7 +194,10 @@ export async function POST(request: Request) {
 
       console.log("✅ Confirmation email sent to customer")
     } catch (confirmError) {
-      console.warn("⚠️ Failed to send confirmation email:", confirmError.message)
+      console.warn(
+        "⚠️ Failed to send confirmation email:",
+        confirmError instanceof Error ? confirmError.message : "Unknown error",
+      )
     }
 
     return Response.json({
@@ -195,7 +208,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("❌ Email sending error:", error)
 
-    if (error.name === "AbortError") {
+    if (error instanceof Error && error.name === "AbortError") {
       return Response.json(
         {
           success: false,
@@ -209,6 +222,7 @@ export async function POST(request: Request) {
       {
         success: false,
         error: "An unexpected error occurred. Please try again or contact us directly at contact@euronegocetrade.com",
+        details: config.isDevelopment ? error : undefined,
       },
       { status: 500 },
     )

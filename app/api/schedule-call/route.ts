@@ -1,5 +1,12 @@
+import { config, validateConfig } from "@/lib/config"
+
 export async function POST(request: Request) {
   try {
+    // Validate configuration in development
+    if (config.isDevelopment) {
+      validateConfig()
+    }
+
     const body = await request.json()
     const { name, email, company, phone, date, time, timezone, topic, message } = body
 
@@ -27,7 +34,7 @@ export async function POST(request: Request) {
     }
 
     // Check if Resend API key is available
-    if (!process.env.RESEND_API_KEY) {
+    if (!config.resend.apiKey) {
       console.error("RESEND_API_KEY not found in environment variables")
       return Response.json(
         {
@@ -54,8 +61,8 @@ export async function POST(request: Request) {
 
     // Send email to company
     const emailData = {
-      from: "noreply@euronegocetrade.com",
-      to: ["contact@euronegocetrade.com"],
+      from: config.resend.fromEmail,
+      to: [config.resend.toEmail],
       reply_to: email,
       subject: `📅 Call Scheduled: ${name} - ${topic}`,
       html: `
@@ -105,7 +112,7 @@ export async function POST(request: Request) {
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        Authorization: `Bearer ${config.resend.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(emailData),
@@ -117,7 +124,7 @@ export async function POST(request: Request) {
 
     // Send confirmation to customer
     const confirmationEmail = {
-      from: "noreply@euronegocetrade.com",
+      from: config.resend.fromEmail,
       to: [email],
       subject: "📅 Your Call with Euro Negoce Trade is Scheduled",
       html: `
@@ -146,7 +153,7 @@ export async function POST(request: Request) {
               </p>
             </div>
             
-            <p style="margin-top: 20px;">If you need to reschedule or have any questions, please reply to this email or contact us at contact@euronegocetrade.com.</p>
+            <p style="margin-top: 20px;">If you need to reschedule or have any questions, please reply to this email or contact us at ${config.resend.toEmail}.</p>
             
             <p>Best regards,<br>Euro Negoce Trade Team</p>
           </div>
@@ -157,7 +164,7 @@ export async function POST(request: Request) {
     await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        Authorization: `Bearer ${config.resend.apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(confirmationEmail),

@@ -1,7 +1,7 @@
 {
-  "name": "Euro Negoce - Premium Olive Oil & Mediterranean Trading",
+  "name": "Euro Negoce Trading",
   "short_name": "Euro Negoce",
-  "description": "Leading international trade company specializing in premium olive oil, Mediterranean produce & edible oils export/import worldwide.",
+  "description": "Leading international trade company specializing in premium olive oil, fresh Mediterranean produce & edible oils export/import.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -9,19 +9,30 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/favicon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
     },
     {
-      "src": "/favicon-512.png",
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "food", "trade"],
+  "categories": ["business", "productivity"],
   "lang": "en",
-  "dir": "ltr"
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false
 }

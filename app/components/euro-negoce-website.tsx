@@ -980,7 +980,7 @@ function Testimonials() {
                 <div className="w-full max-w-[280px] mx-auto text-center p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-100">
                   <div className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Business Type</div>
                   <div className="text-sm sm:text-base font-bold text-blue-600">Independent Retailer</div>
-                  <div className="text-xs sm:text-sm text-gray-600 mt-1">Partnered since 2023</div>
+                  <div className="text-xs sm:text-sm text-gray-600 mt-1">Partner</div>
                 </div>
               </div>
 
