@@ -81,7 +81,7 @@ function Hero({
       className="bg-gradient-to-br from-green-100 via-blue-50 to-green-50 pt-16 sm:pt-20 md:pt-24 pb-24 sm:pb-32 md:pb-48 text-center relative overflow-hidden"
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-4 sm:mb-6 leading-tight bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent px-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl font-bold mb-4 sm:mb-6 leading-relaxed bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent px-2 py-2">
           {t("hero_title")}
         </h1>
         <p className="text-sm sm:text-base md:text-lg lg:text-xl max-w-3xl mx-auto text-gray-700 mb-6 sm:mb-8 px-4">
