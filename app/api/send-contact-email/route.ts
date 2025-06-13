@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server"
-import { sendEmail, verifyApiKey } from "@/lib/email"
+import { sendBrevoEmail, verifyBrevoApiKey } from "@/lib/brevo-email"
+import { saveContact, logEmail } from "@/lib/database"
 
 export async function POST(request: Request) {
   const startTime = Date.now()
   console.log("🚀 Contact form submission started at:", new Date().toISOString())
 
   try {
-    // Step 1: Verify API key first
-    console.log("🚀 Step 1: Verifying API key configuration...")
-    const keyVerification = verifyApiKey()
+    // Step 1: Verify Brevo API key first
+    console.log("🚀 Step 1: Verifying Brevo API key configuration...")
+    const keyVerification = verifyBrevoApiKey()
 
-    if (!keyVerification.isCorrectKey || !keyVerification.resendInitialized) {
-      console.error("❌ Step 1 failed: Email service not properly configured")
+    if (!keyVerification.hasApiKey || !keyVerification.brevoInitialized) {
+      console.error("❌ Step 1 failed: Brevo email service not properly configured")
       console.error("❌ Key verification details:", keyVerification)
 
       return NextResponse.json(
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log("✅ Step 1 completed: API key verified")
+    console.log("✅ Step 1 completed: Brevo API key verified")
 
     // Step 2: Parse and validate form data
     console.log("🚀 Step 2: Parsing form data...")
@@ -65,19 +66,28 @@ export async function POST(request: Request) {
       product: selectedProduct ? String(selectedProduct).trim().replace(/[<>]/g, "") : "",
     }
 
-    console.log("🚀 Sanitized data:", {
-      name: sanitizedData.name,
-      email: sanitizedData.email,
-      company: sanitizedData.company || "Not provided",
-      phone: sanitizedData.phone || "Not provided",
-      messageLength: sanitizedData.message.length,
-      product: sanitizedData.product || "Not specified",
-    })
-
     console.log("✅ Step 3 completed: Form data sanitized")
 
-    // Step 4: Create email content
-    console.log("🚀 Step 4: Creating email content...")
+    // Step 4: Save to database
+    console.log("🚀 Step 4: Saving contact to database...")
+    const contactResult = await saveContact({
+      name: sanitizedData.name,
+      email: sanitizedData.email,
+      company: sanitizedData.company || null,
+      phone: sanitizedData.phone || null,
+      message: sanitizedData.message,
+      selected_product: sanitizedData.product || null,
+    })
+
+    if (!contactResult.success) {
+      console.error("❌ Step 4 failed: Database save failed:", contactResult.error)
+      // Continue with email sending even if database fails
+    } else {
+      console.log("✅ Step 4 completed: Contact saved to database with ID:", contactResult.data?.id)
+    }
+
+    // Step 5: Create email content
+    console.log("🚀 Step 5: Creating email content...")
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px;">
         <div style="background: #16a34a; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
@@ -108,9 +118,9 @@ export async function POST(request: Request) {
             <p style="margin: 0; color: #0369a1; font-size: 12px;">
               <strong>📊 Submission Details:</strong><br>
               Timestamp: ${new Date().toLocaleString()}<br>
+              Contact ID: ${contactResult.data?.id || "Not saved"}<br>
               Processing Time: ${Date.now() - startTime}ms<br>
-              Email System: Resend SDK<br>
-              API Key Status: ${keyVerification.message}
+              Email System: Brevo API
             </p>
           </div>
         </div>
@@ -123,25 +133,30 @@ export async function POST(request: Request) {
       </div>
     `
 
-    console.log("🚀 Email content created, length:", htmlContent.length)
-    console.log("✅ Step 4 completed: Email content created")
+    console.log("✅ Step 5 completed: Email content created")
 
-    // Step 5: Send email using Resend SDK
-    console.log("🚀 Step 5: Attempting to send email via Resend SDK...")
-    console.log("🚀 Email parameters:", {
+    // Step 6: Send email using Brevo API
+    console.log("🚀 Step 6: Attempting to send email via Brevo API...")
+    const result = await sendBrevoEmail({
       subject: `🔔 New Contact: ${sanitizedData.name}${sanitizedData.company ? ` - ${sanitizedData.company}` : ""}`,
-      replyTo: sanitizedData.email,
-      htmlLength: htmlContent.length,
-    })
-
-    const result = await sendEmail({
-      subject: `🔔 New Contact: ${sanitizedData.name}${sanitizedData.company ? ` - ${sanitizedData.company}` : ""}`,
-      html: htmlContent,
+      htmlContent: htmlContent,
       replyTo: sanitizedData.email,
     })
 
-    console.log("✅ Step 5 completed: Email sent successfully via Resend SDK")
-    console.log("🚀 Send result:", JSON.stringify(result, null, 2))
+    console.log("✅ Step 6 completed: Email sent successfully via Brevo API")
+
+    // Step 7: Log email delivery
+    console.log("🚀 Step 7: Logging email delivery...")
+    await logEmail({
+      email_type: "contact_form",
+      recipient_email: "contact@euronegocetrade.com",
+      subject: `🔔 New Contact: ${sanitizedData.name}${sanitizedData.company ? ` - ${sanitizedData.company}` : ""}`,
+      status: "sent",
+      resend_email_id: result.data?.id || null,
+      related_contact_id: contactResult.data?.id || null,
+    })
+
+    console.log("✅ Step 7 completed: Email delivery logged")
 
     const totalTime = Date.now() - startTime
     console.log(`🎉 Contact form submission completed successfully in ${totalTime}ms`)
@@ -153,7 +168,9 @@ export async function POST(request: Request) {
         processingTime: totalTime,
         timestamp: new Date().toISOString(),
         emailId: result.data?.id,
-        apiKeyStatus: keyVerification.message,
+        contactId: contactResult.data?.id,
+        databaseSaved: contactResult.success,
+        emailService: "Brevo",
       },
     })
   } catch (error) {
@@ -161,15 +178,10 @@ export async function POST(request: Request) {
     console.error("❌ Contact form submission failed:")
     console.error("❌ Error occurred at:", new Date().toISOString())
     console.error("❌ Processing time before error:", totalTime + "ms")
-    console.error("❌ Error type:", typeof error)
-    console.error("❌ Error constructor:", error instanceof Error ? error.constructor.name : "Unknown")
 
     if (error instanceof Error) {
-      console.error("❌ Error name:", error.name)
       console.error("❌ Error message:", error.message)
       console.error("❌ Error stack:", error.stack)
-    } else {
-      console.error("❌ Non-Error object thrown:", error)
     }
 
     return NextResponse.json(
@@ -181,6 +193,7 @@ export async function POST(request: Request) {
           timestamp: new Date().toISOString(),
           errorType: error instanceof Error ? error.constructor.name : typeof error,
           errorMessage: error instanceof Error ? error.message : String(error),
+          emailService: "Brevo",
         },
       },
       { status: 500 },

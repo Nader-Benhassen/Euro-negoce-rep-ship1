@@ -1,9 +1,10 @@
 // Environment configuration with validation
 export const config = {
-  // Email Configuration
-  resend: {
-    apiKey: process.env.RESEND_API_KEY || "",
-    fromEmail: "noreply@euronegocetrade.com",
+  // Email Configuration - Now using Brevo
+  brevo: {
+    apiKey: process.env.BREVO_API_KEY || "",
+    fromEmail: "contact@euronegocetrade.com",
+    fromName: "Euro Negoce Trade",
     toEmail: "contact@euronegocetrade.com",
   },
 
@@ -30,8 +31,8 @@ export const config = {
 export function validateConfig() {
   const errors: string[] = []
 
-  if (!config.resend.apiKey && config.isProduction) {
-    errors.push("RESEND_API_KEY is required in production")
+  if (!config.brevo.apiKey && config.isProduction) {
+    errors.push("BREVO_API_KEY is required in production")
   }
 
   if (config.isProduction && !config.site.url.startsWith("https://")) {
