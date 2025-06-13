@@ -1,118 +1,174 @@
-# 🚀 Euro Negoce Trade - Deployment Guide
+# Euro Negoce Trade - Deployment Guide
 
-## 📋 Pre-Deployment Checklist
+## 🚀 Quick Deployment
 
-### 1. Environment Variables Setup
+This project is ready to deploy to Vercel with minimal configuration.
 
-#### **Required Environment Variables:**
+### Prerequisites
+
+1. **Vercel Account** - Sign up at [vercel.com](https://vercel.com)
+2. **GitHub Repository** - Your code should be in a GitHub repository
+3. **Brevo Account** - For email services
+4. **Supabase Account** - For database services
+
+### Environment Variables Required
+
 \`\`\`bash
-RESEND_API_KEY=re_5FM8T24R_5CiKQSRbHYX6FmDsBoEpUeTz
-\`\`\`
+# Brevo Email Service
+BREVO_API_KEY=your_brevo_api_key_here
 
-#### **Optional Environment Variables:**
-\`\`\`bash
-NEXT_PUBLIC_SITE_URL=https://yourdomain.com
+# Supabase Database
+EURONEGOCE_DB_SUPABASE_URL=https://your-project-id.supabase.co
+EURONEGOCE_DB_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Optional: Search Engine Verification
 GOOGLE_VERIFICATION_CODE=your_google_verification_code
 YANDEX_VERIFICATION_CODE=your_yandex_verification_code
 BING_VERIFICATION_CODE=your_bing_verification_code
+
+# Site Configuration
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
 NODE_ENV=production
 \`\`\`
 
-### 2. Vercel Deployment Steps
+## 📋 Step-by-Step Deployment
 
-#### **Step 1: Connect Repository**
-1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
-2. Click "New Project"
-3. Import your Git repository
-4. Select "Next.js" framework preset
+### 1. Database Setup (Supabase)
 
-#### **Step 2: Configure Environment Variables**
-1. In project settings, go to "Environment Variables"
-2. Add the following variables:
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Go to the SQL Editor
+3. Run the database creation scripts:
+   - Execute `scripts/001-create-tables.sql`
+   - Execute `scripts/002-create-indexes.sql`
+4. Copy your project URL and anon key from Settings > API
 
-| Name | Value | Environment |
-|------|-------|-------------|
-| `RESEND_API_KEY` | `re_5FM8T24R_5CiKQSRbHYX6FmDsBoEpUeTz` | Production, Preview |
-| `NEXT_PUBLIC_SITE_URL` | `https://yourdomain.com` | Production |
-| `NODE_ENV` | `production` | Production |
+### 2. Email Service Setup (Brevo)
 
-#### **Step 3: Deploy**
-1. Click "Deploy"
-2. Wait for build to complete
-3. Test all functionality
+1. Create account at [brevo.com](https://brevo.com)
+2. Go to SMTP & API > API Keys
+3. Create a new API key
+4. Copy the API key for environment variables
 
-### 3. Domain Configuration
+### 3. Vercel Deployment
 
-#### **Custom Domain Setup:**
-1. Go to Project Settings → Domains
-2. Add your custom domain
-3. Configure DNS records as instructed
-4. Wait for SSL certificate provisioning
+1. **Connect Repository**
+   - Go to [vercel.com/dashboard](https://vercel.com/dashboard)
+   - Click "New Project"
+   - Import your GitHub repository
 
-### 4. Post-Deployment Verification
+2. **Configure Environment Variables**
+   - In project settings, go to "Environment Variables"
+   - Add all required environment variables listed above
+   - Make sure to select all environments (Production, Preview, Development)
 
-#### **Test Email Functionality:**
-- [ ] Contact form submission
-- [ ] Email delivery to contact@euronegocetrade.com
-- [ ] Confirmation email to customer
-- [ ] Call scheduling functionality
-- [ ] Quote request functionality
+3. **Deploy**
+   - Click "Deploy"
+   - Vercel will automatically build and deploy your application
 
-#### **Test Google Verification:**
-- [ ] Access `https://yourdomain.com/googlefe009b203c155ab9.html`
-- [ ] Verify Google Search Console
-- [ ] Submit sitemap
+### 4. Domain Configuration (Optional)
 
-#### **Performance Check:**
-- [ ] Page load speed < 3 seconds
-- [ ] Mobile responsiveness
-- [ ] SEO meta tags
-- [ ] Image optimization
+1. **Custom Domain**
+   - Go to project Settings > Domains
+   - Add your custom domain
+   - Follow DNS configuration instructions
 
-## 🔒 Security Checklist
+2. **SSL Certificate**
+   - Automatically provided by Vercel
+   - No additional configuration needed
 
-- [x] API keys stored in environment variables
-- [x] No sensitive data in code repository
-- [x] HTTPS enforced
-- [x] Security headers configured
-- [x] Input validation implemented
-- [x] Error handling without data leaks
+## 🧪 Testing Your Deployment
 
-## 📊 Monitoring Setup
+### 1. Test Email System
+Visit: `https://your-domain.com/api/test-brevo`
 
-### **Recommended Tools:**
-1. **Vercel Analytics** - Built-in performance monitoring
-2. **Google Search Console** - SEO and indexing
-3. **Google Analytics** - User behavior tracking
-4. **Uptime monitoring** - Service availability
+### 2. Test Contact Form
+Submit a test contact form on your website
 
-## 🚨 Troubleshooting
+### 3. Check Database
+Verify data is being saved in your Supabase dashboard
 
-### **Common Issues:**
+### 4. Admin Endpoints
+- `/api/admin/contacts` - View all contacts
+- `/api/admin/calls` - View scheduled calls
+- `/api/admin/emails` - View email logs
 
-#### **Email Not Sending:**
-1. Check RESEND_API_KEY is set correctly
-2. Verify API key is active in Resend dashboard
-3. Check email logs in Vercel Functions tab
+## 🔧 Troubleshooting
 
-#### **Build Failures:**
-1. Check TypeScript errors
-2. Verify all imports are correct
-3. Ensure all dependencies are installed
+### Common Issues
 
-#### **Performance Issues:**
-1. Enable Vercel Edge Functions
-2. Optimize images
-3. Enable compression
+1. **Email Not Sending**
+   - Check BREVO_API_KEY is correctly set
+   - Verify API key has proper permissions
+   - Check `/api/test-brevo` endpoint
 
-## 📞 Support
+2. **Database Connection Issues**
+   - Verify Supabase URL and key are correct
+   - Check if database tables exist
+   - Ensure RLS policies allow operations
 
-If you encounter issues:
-1. Check Vercel deployment logs
-2. Review environment variables
-3. Test locally first
-4. Contact support if needed
+3. **Build Failures**
+   - Check all environment variables are set
+   - Verify no TypeScript errors
+   - Check package.json dependencies
+
+### Performance Optimization
+
+1. **Image Optimization**
+   - All images are optimized with Next.js Image component
+   - WebP format used where supported
+
+2. **Caching**
+   - Static assets cached by Vercel CDN
+   - API routes optimized for performance
+
+3. **SEO**
+   - Sitemap automatically generated
+   - Meta tags optimized
+   - Search engine verification codes supported
+
+## 📊 Monitoring
+
+### Analytics
+- Vercel Analytics automatically enabled
+- Real-time performance monitoring
+- Error tracking and reporting
+
+### Database Monitoring
+- Supabase dashboard provides real-time metrics
+- Query performance monitoring
+- Storage usage tracking
+
+### Email Monitoring
+- Brevo dashboard shows delivery statistics
+- Email logs stored in database
+- Admin endpoints for monitoring
+
+## 🔄 Updates and Maintenance
+
+### Automatic Deployments
+- Connected to GitHub for automatic deployments
+- Preview deployments for pull requests
+- Production deployments on main branch
+
+### Database Migrations
+- New SQL scripts should be numbered sequentially
+- Run migrations in Supabase SQL Editor
+- Test in preview environment first
+
+### Environment Management
+- Use Vercel environment variables for configuration
+- Separate staging and production environments
+- Regular backup of environment variables
 
 ---
 
-**✅ Your website is now production-ready with secure API configuration!**
+## 🆘 Support
+
+If you encounter issues during deployment:
+
+1. Check Vercel deployment logs
+2. Review Supabase logs
+3. Test individual API endpoints
+4. Contact support if needed
+
+Your Euro Negoce Trade website is now ready for production! 🎉

@@ -1,4 +1,4 @@
-import { testBrevoEmailConfig, verifyBrevoApiKey } from "@/lib/brevo-email"
+import { sendBrevoEmailFetch, verifyBrevoApiKey } from "@/lib/brevo-fetch"
 
 export async function GET() {
   try {
@@ -31,21 +31,31 @@ export async function GET() {
     })
 
     // Test 2: Try to send a test email
-    const testResult = await testBrevoEmailConfig()
-
-    if (!testResult.success) {
-      testResults.tests.push({
-        test: "Send Test Email",
-        status: "FAIL",
-        message: `Brevo API Error: ${testResult.error || "Unknown error"}`,
-        details: testResult,
+    try {
+      const testResult = await sendBrevoEmailFetch({
+        subject: `🧪 Brevo Test Email - ${new Date().toISOString()}`,
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #16a34a;">✅ Brevo Email System Test Successful!</h2>
+            <p>This test email confirms that your email system is working correctly with the Brevo API.</p>
+            <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+            <p><strong>Email Service:</strong> Brevo (via Fetch API)</p>
+            <p style="color: #059669;">If you receive this email, your Brevo email system is working correctly! 🎉</p>
+          </div>
+        `,
       })
-    } else {
+
       testResults.tests.push({
         test: "Send Test Email",
         status: "PASS",
-        message: `Email sent successfully via Brevo. ID: ${testResult.testResult?.data?.id}`,
-        emailId: testResult.testResult?.data?.id,
+        message: `Email sent successfully via Brevo. ID: ${testResult.data?.id}`,
+        emailId: testResult.data?.id,
+      })
+    } catch (emailError) {
+      testResults.tests.push({
+        test: "Send Test Email",
+        status: "FAIL",
+        message: `Brevo API Error: ${emailError instanceof Error ? emailError.message : String(emailError)}`,
       })
     }
 
@@ -56,23 +66,6 @@ export async function GET() {
       error: "Test failed with exception",
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-    })
-  }
-}
-
-export async function POST() {
-  // Send a test email to a specific address
-  try {
-    const testResult = await testBrevoEmailConfig()
-
-    return Response.json({
-      success: testResult.success,
-      result: testResult,
-    })
-  } catch (error) {
-    return Response.json({
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
     })
   }
 }

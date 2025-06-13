@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { sendBrevoEmail } from "@/lib/brevo-email"
+import { sendBrevoEmailFetch } from "@/lib/brevo-fetch"
 
 export async function POST(req: NextRequest) {
   try {
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       </div>
     `
 
-    const result = await sendBrevoEmail({
+    const result = await sendBrevoEmailFetch({
       subject: "🔥 URGENT Quote Request - Euro Negoce Trade",
       htmlContent: htmlContent,
       replyTo: email,

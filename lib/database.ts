@@ -1,242 +1,234 @@
-import { getSupabaseClient, type Contact, type ScheduledCall, type QuoteRequest, type EmailLog } from "./supabase"
+import { createClient } from "@supabase/supabase-js"
 
-// Contact form functions
-export async function saveContact(contact: Omit<Contact, "id" | "status" | "created_at" | "updated_at">) {
+const supabaseUrl = process.env.EURONEGOCE_DB_SUPABASE_URL!
+const supabaseKey = process.env.EURONEGOCE_DB_SUPABASE_ANON_KEY!
+
+// Create a singleton Supabase client
+let supabaseClient: ReturnType<typeof createClient> | null = null
+
+function getSupabaseClient() {
+  if (!supabaseClient) {
+    supabaseClient = createClient(supabaseUrl, supabaseKey)
+  }
+  return supabaseClient
+}
+
+// Types for our database operations
+export interface ContactData {
+  name: string
+  email: string
+  company?: string | null
+  phone?: string | null
+  message: string
+  selected_product?: string | null
+}
+
+export interface CallData {
+  name: string
+  email: string
+  company?: string | null
+  phone?: string | null
+  preferred_date: string
+  preferred_time: string
+  timezone: string
+  message?: string | null
+}
+
+export interface EmailLogData {
+  email_type: string
+  recipient_email: string
+  subject: string
+  status: "sent" | "failed" | "pending"
+  brevo_email_id?: string | null
+  related_contact_id?: number | null
+  related_call_id?: number | null
+}
+
+// Save contact form submission
+export async function saveContact(contactData: ContactData) {
   try {
-    console.log("🚀 Saving contact to database:", contact.name)
-    const supabase = getSupabaseClient()
+    console.log("💾 Saving contact to database:", contactData)
 
-    const { data, error } = await supabase
-      .from("contacts")
-      .insert({
-        name: contact.name,
-        email: contact.email,
-        company: contact.company,
-        phone: contact.phone,
-        message: contact.message,
-        selected_product: contact.selected_product,
-      })
-      .select()
-      .single()
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase.from("contacts").insert([contactData]).select().single()
 
     if (error) {
       console.error("❌ Database error saving contact:", error)
-      return { success: false, error: error.message }
+      return {
+        success: false,
+        error: error.message,
+        data: null,
+      }
     }
 
-    console.log("✅ Contact saved successfully with ID:", data.id)
-    return { success: true, data }
+    console.log("✅ Contact saved successfully:", data)
+    return {
+      success: true,
+      error: null,
+      data,
+    }
   } catch (error) {
     console.error("❌ Exception saving contact:", error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown database error",
+      error: error instanceof Error ? error.message : "Unknown error",
+      data: null,
     }
   }
 }
 
-export async function getContacts(limit = 100, offset = 0, status?: string) {
+// Save scheduled call
+export async function saveScheduledCall(callData: CallData) {
   try {
+    console.log("💾 Saving scheduled call to database:", callData)
+
     const supabase = getSupabaseClient()
-
-    let query = supabase
-      .from("contacts")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1)
-
-    if (status) {
-      query = query.eq("status", status)
-    }
-
-    const { data, error } = await query
+    const { data, error } = await supabase.from("scheduled_calls").insert([callData]).select().single()
 
     if (error) {
-      console.error("❌ Database error getting contacts:", error)
-      return { success: false, error: error.message }
+      console.error("❌ Database error saving call:", error)
+      return {
+        success: false,
+        error: error.message,
+        data: null,
+      }
     }
 
-    return { success: true, data }
+    console.log("✅ Scheduled call saved successfully:", data)
+    return {
+      success: true,
+      error: null,
+      data,
+    }
   } catch (error) {
-    console.error("❌ Exception getting contacts:", error)
+    console.error("❌ Exception saving call:", error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown database error",
+      error: error instanceof Error ? error.message : "Unknown error",
+      data: null,
     }
   }
 }
 
-// Scheduled call functions
-export async function saveScheduledCall(call: Omit<ScheduledCall, "id" | "status" | "created_at" | "updated_at">) {
+// Log email delivery
+export async function logEmail(emailData: EmailLogData) {
   try {
-    console.log("🚀 Saving scheduled call to database:", call.name)
+    console.log("📧 Logging email to database:", emailData)
+
     const supabase = getSupabaseClient()
-
-    const { data, error } = await supabase
-      .from("scheduled_calls")
-      .insert({
-        name: call.name,
-        email: call.email,
-        company: call.company,
-        phone: call.phone,
-        call_date: call.call_date,
-        call_time: call.call_time,
-        timezone: call.timezone,
-        topic: call.topic,
-        message: call.message,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error("❌ Database error saving scheduled call:", error)
-      return { success: false, error: error.message }
-    }
-
-    console.log("✅ Scheduled call saved successfully with ID:", data.id)
-    return { success: true, data }
-  } catch (error) {
-    console.error("❌ Exception saving scheduled call:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown database error",
-    }
-  }
-}
-
-export async function getScheduledCalls(limit = 100, offset = 0, status?: string) {
-  try {
-    const supabase = getSupabaseClient()
-
-    let query = supabase
-      .from("scheduled_calls")
-      .select("*")
-      .order("call_date", { ascending: true })
-      .range(offset, offset + limit - 1)
-
-    if (status) {
-      query = query.eq("status", status)
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error("❌ Database error getting scheduled calls:", error)
-      return { success: false, error: error.message }
-    }
-
-    return { success: true, data }
-  } catch (error) {
-    console.error("❌ Exception getting scheduled calls:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown database error",
-    }
-  }
-}
-
-// Quote request functions
-export async function saveQuoteRequest(quote: Omit<QuoteRequest, "id" | "status" | "created_at" | "updated_at">) {
-  try {
-    console.log("🚀 Saving quote request to database:", quote.name)
-    const supabase = getSupabaseClient()
-
-    const { data, error } = await supabase
-      .from("quote_requests")
-      .insert({
-        name: quote.name,
-        email: quote.email,
-        company: quote.company,
-        phone: quote.phone,
-        product: quote.product,
-        quantity: quote.quantity,
-        delivery_location: quote.delivery_location,
-        additional_requirements: quote.additional_requirements,
-      })
-      .select()
-      .single()
-
-    if (error) {
-      console.error("❌ Database error saving quote request:", error)
-      return { success: false, error: error.message }
-    }
-
-    console.log("✅ Quote request saved successfully with ID:", data.id)
-    return { success: true, data }
-  } catch (error) {
-    console.error("❌ Exception saving quote request:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown database error",
-    }
-  }
-}
-
-// Email logging functions
-export async function logEmail(log: Omit<EmailLog, "id" | "created_at">) {
-  try {
-    console.log("🚀 Logging email delivery:", log.email_type)
-    const supabase = getSupabaseClient()
-
-    const { data, error } = await supabase
-      .from("email_logs")
-      .insert({
-        email_type: log.email_type,
-        recipient_email: log.recipient_email,
-        subject: log.subject,
-        status: log.status,
-        resend_email_id: log.resend_email_id,
-        error_message: log.error_message,
-        related_contact_id: log.related_contact_id,
-        related_call_id: log.related_call_id,
-        related_quote_id: log.related_quote_id,
-      })
-      .select()
-      .single()
+    const { data, error } = await supabase.from("email_logs").insert([emailData]).select().single()
 
     if (error) {
       console.error("❌ Database error logging email:", error)
-      return { success: false, error: error.message }
+      return {
+        success: false,
+        error: error.message,
+        data: null,
+      }
     }
 
-    console.log("✅ Email log saved successfully with ID:", data.id)
-    return { success: true, data }
+    console.log("✅ Email logged successfully:", data)
+    return {
+      success: true,
+      error: null,
+      data,
+    }
   } catch (error) {
     console.error("❌ Exception logging email:", error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown database error",
+      error: error instanceof Error ? error.message : "Unknown error",
+      data: null,
     }
   }
 }
 
-export async function getEmailLogs(limit = 100, offset = 0, emailType?: string) {
+// Get all contacts (for admin)
+export async function getAllContacts() {
   try {
     const supabase = getSupabaseClient()
-
-    let query = supabase
-      .from("email_logs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1)
-
-    if (emailType) {
-      query = query.eq("email_type", emailType)
-    }
-
-    const { data, error } = await query
+    const { data, error } = await supabase.from("contacts").select("*").order("created_at", { ascending: false })
 
     if (error) {
-      console.error("❌ Database error getting email logs:", error)
-      return { success: false, error: error.message }
+      console.error("❌ Database error fetching contacts:", error)
+      return {
+        success: false,
+        error: error.message,
+        data: null,
+      }
     }
 
-    return { success: true, data }
+    return {
+      success: true,
+      error: null,
+      data,
+    }
   } catch (error) {
-    console.error("❌ Exception getting email logs:", error)
+    console.error("❌ Exception fetching contacts:", error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown database error",
+      error: error instanceof Error ? error.message : "Unknown error",
+      data: null,
+    }
+  }
+}
+
+// Get all scheduled calls (for admin)
+export async function getAllScheduledCalls() {
+  try {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase.from("scheduled_calls").select("*").order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("❌ Database error fetching calls:", error)
+      return {
+        success: false,
+        error: error.message,
+        data: null,
+      }
+    }
+
+    return {
+      success: true,
+      error: null,
+      data,
+    }
+  } catch (error) {
+    console.error("❌ Exception fetching calls:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+      data: null,
+    }
+  }
+}
+
+// Get all email logs (for admin)
+export async function getAllEmailLogs() {
+  try {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase.from("email_logs").select("*").order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("❌ Database error fetching email logs:", error)
+      return {
+        success: false,
+        error: error.message,
+        data: null,
+      }
+    }
+
+    return {
+      success: true,
+      error: null,
+      data,
+    }
+  } catch (error) {
+    console.error("❌ Exception fetching email logs:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+      data: null,
     }
   }
 }

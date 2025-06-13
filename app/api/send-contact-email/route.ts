@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { sendBrevoEmail, verifyBrevoApiKey } from "@/lib/brevo-email"
+import { sendBrevoEmailFetch, verifyBrevoApiKey } from "@/lib/brevo-fetch"
 import { saveContact, logEmail } from "@/lib/database"
 
 export async function POST(request: Request) {
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
 
     // Step 6: Send email using Brevo API
     console.log("🚀 Step 6: Attempting to send email via Brevo API...")
-    const result = await sendBrevoEmail({
+    const result = await sendBrevoEmailFetch({
       subject: `🔔 New Contact: ${sanitizedData.name}${sanitizedData.company ? ` - ${sanitizedData.company}` : ""}`,
       htmlContent: htmlContent,
       replyTo: sanitizedData.email,
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
       recipient_email: "contact@euronegocetrade.com",
       subject: `🔔 New Contact: ${sanitizedData.name}${sanitizedData.company ? ` - ${sanitizedData.company}` : ""}`,
       status: "sent",
-      resend_email_id: result.data?.id || null,
+      brevo_email_id: result.data?.id || null,
       related_contact_id: contactResult.data?.id || null,
     })
 
