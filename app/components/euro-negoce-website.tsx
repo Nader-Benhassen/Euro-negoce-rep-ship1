@@ -789,7 +789,6 @@ function Testimonials() {
   const [isPlaying, setIsPlaying] = useState(true)
   const [likedTestimonials, setLikedTestimonials] = useState<Set<number>>(new Set())
   const isMobile = useMediaQuery("(max-width: 640px)")
-  const isTablet = useMediaQuery("(max-width: 1024px)")
 
   const testimonials = [
     {
@@ -958,10 +957,10 @@ function Testimonials() {
               </button>
             </div>
 
-            {/* Testimonial Content - Improved Layout */}
+            {/* Testimonial Content */}
             <div className="md:flex items-start gap-4 sm:gap-6 md:gap-8">
               <div className="md:w-1/3 mb-4 sm:mb-6 md:mb-0 flex flex-col items-center">
-                {/* Company Display - Improved to handle longer names */}
+                {/* Company Display */}
                 <div className="relative mb-3 sm:mb-4 w-full max-w-[280px] mx-auto">
                   <div className="aspect-square rounded-xl bg-gradient-to-br from-blue-50 to-green-50 shadow-xl border border-gray-200 p-3 sm:p-4 flex flex-col items-center justify-center">
                     <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-600 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center">
@@ -976,7 +975,7 @@ function Testimonials() {
                   </div>
                 </div>
 
-                {/* Company Info - Improved spacing and text handling */}
+                {/* Company Info */}
                 <div className="w-full max-w-[280px] mx-auto text-center p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-green-50 rounded-lg border border-blue-100">
                   <div className="text-xs sm:text-sm font-medium text-gray-600 mb-1">Business Type</div>
                   <div className="text-sm sm:text-base font-bold text-blue-600">Independent Retailer</div>
@@ -1176,13 +1175,12 @@ export default function EuroNegoceWebsite() {
       setShowProductsModal(true)
     }
 
-    // Add event listeners
+    // Listen for custom events from chatbot
     window.addEventListener("openQuoteModal", handleOpenQuoteModal)
     window.addEventListener("openContactModal", handleOpenContactModal)
     window.addEventListener("openCallScheduler", handleOpenCallScheduler)
     window.addEventListener("openProductsModal", handleOpenProductsModal)
 
-    // Cleanup event listeners
     return () => {
       window.removeEventListener("openQuoteModal", handleOpenQuoteModal)
       window.removeEventListener("openContactModal", handleOpenContactModal)
@@ -1192,8 +1190,7 @@ export default function EuroNegoceWebsite() {
   }, [])
 
   return (
-    <>
-      <CookieConsent />
+    <div className="min-h-screen bg-white">
       <Header />
       <Hero
         showContactModal={showContactModal}
@@ -1203,19 +1200,21 @@ export default function EuroNegoceWebsite() {
         showScheduler={showScheduler}
         setShowScheduler={setShowScheduler}
       />
-      <GlobalOperationsSection t={t} />
       <ProductGallery />
+      <GlobalOperationsSection />
       <Testimonials />
       <Footer />
+
+      {/* Modals */}
       <ContactModal isOpen={showContactModal} onClose={() => setShowContactModal(false)} />
       <ProductsModal isOpen={showProductsModal} onClose={() => setShowProductsModal(false)} />
       <AppointmentScheduler isOpen={showScheduler} onClose={() => setShowScheduler(false)} />
-      <ChatBot
-        onOpenProducts={() => setShowProductsModal(true)}
-        onOpenContact={() => setShowContactModal(true)}
-        onOpenQuote={() => setShowContactModal(true)}
-        onOpenAppointment={() => setShowScheduler(true)}
-      />
-    </>
+
+      {/* Cookie Consent */}
+      <CookieConsent />
+
+      {/* Chatbot */}
+      <ChatBot />
+    </div>
   )
 }
