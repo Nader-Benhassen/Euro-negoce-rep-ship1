@@ -143,7 +143,7 @@ export async function logEmail(emailData: EmailLogData) {
   }
 }
 
-// Get all contacts (for admin)
+// Get all contacts (for admin) - with both function names for compatibility
 export async function getAllContacts() {
   try {
     const supabase = getSupabaseClient()
@@ -173,7 +173,10 @@ export async function getAllContacts() {
   }
 }
 
-// Get all scheduled calls (for admin)
+// Export with the expected name for admin APIs
+export const getContacts = getAllContacts
+
+// Get all scheduled calls (for admin) - with both function names for compatibility
 export async function getAllScheduledCalls() {
   try {
     const supabase = getSupabaseClient()
@@ -203,7 +206,10 @@ export async function getAllScheduledCalls() {
   }
 }
 
-// Get all email logs (for admin)
+// Export with the expected name for admin APIs
+export const getScheduledCalls = getAllScheduledCalls
+
+// Get all email logs (for admin) - with both function names for compatibility
 export async function getAllEmailLogs() {
   try {
     const supabase = getSupabaseClient()
@@ -232,3 +238,6 @@ export async function getAllEmailLogs() {
     }
   }
 }
+
+// Export with the expected name for admin APIs
+export const getEmailLogs = getAllEmailLogs
