@@ -1,18 +1,15 @@
 import { NextResponse } from "next/server"
-import { getSupabaseClient } from "@/lib/database" // Correct way to use database functions
-import { verifyBrevoApiKey } from "@/lib/brevo-fetch" // Correct way to use Brevo functions
+import { getSupabaseClient } from "@/lib/database" // Correct import
+import { verifyBrevoApiKey } from "@/lib/brevo-fetch" // Correct import
+
+export const dynamic = "force-dynamic"
 
 export async function GET() {
   const checks = []
   let overallStatus = "OK"
 
   // Check Environment Variables
-  const requiredEnvVars = [
-    "BREVO_API_KEY",
-    "EURONEGOCE_DB_SUPABASE_URL",
-    "EURONEGOCE_DB_SUPABASE_ANON_KEY",
-    // Add other critical env vars if necessary
-  ]
+  const requiredEnvVars = ["BREVO_API_KEY", "EURONEGOCE_DB_SUPABASE_URL", "EURONEGOCE_DB_SUPABASE_ANON_KEY"]
   const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar])
   if (missingEnvVars.length > 0) {
     checks.push({ name: "Environment Variables", status: "ERROR", message: `Missing: ${missingEnvVars.join(", ")}` })
@@ -31,7 +28,7 @@ export async function GET() {
     checks.push({
       name: "Supabase Client Initialization",
       status: "OK",
-      message: "Supabase client can be initialized (URL/Key present).",
+      message: "Supabase client can be initialized.",
     })
   } catch (error) {
     checks.push({
@@ -46,19 +43,14 @@ export async function GET() {
   const brevoCheck = verifyBrevoApiKey()
   if (brevoCheck.brevoInitialized) {
     checks.push({ name: "Brevo API Key", status: "OK", message: "Brevo API key is present and client initialized." })
-  } else if (brevoCheck.hasApiKey) {
+  } else {
     checks.push({
       name: "Brevo API Key",
-      status: "WARNING",
-      message: "Brevo API key is present but client not initialized.",
+      status: "ERROR",
+      message: "Brevo API key is missing or client failed to init.",
     })
-    // overallStatus might remain 'OK' or be set to 'WARNING' depending on strictness
-  } else {
-    checks.push({ name: "Brevo API Key", status: "ERROR", message: "Brevo API key is missing." })
     overallStatus = "ERROR"
   }
-
-  // Add more checks as needed, e.g., trying a simple DB query or sending a test email (carefully)
 
   return NextResponse.json({
     overallStatus,

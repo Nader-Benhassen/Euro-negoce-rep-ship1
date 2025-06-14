@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { verifyBrevoApiKey } from "@/lib/brevo-fetch" // For Brevo checks
 import { getSupabaseClient } from "@/lib/database" // For Supabase checks
 
+export const dynamic = "force-dynamic"
+
 export async function GET() {
   console.log("🚀 Starting email and system verification...")
   const results = {
@@ -41,17 +43,16 @@ export async function GET() {
   // Verify Supabase connection
   try {
     const supabase = getSupabaseClient() // This will throw if not configured
-    // Attempt a simple query to test connection
-    const { error } = await supabase.from("contacts").select("id", { count: "exact", head: true }) // Use a table you know exists
+    const { error } = await supabase.from("contacts").select("id", { count: "exact", head: true })
 
     if (error && error.code !== "42P01") {
-      // 42P01 means table doesn't exist, which is a schema issue not a connection issue.
+      // "42P01" is undefined_table
       console.error("❌ Supabase query failed:", error)
       throw new Error(`Supabase query failed: ${error.message}`)
     }
     results.supabase.connected = true
     results.supabase.message =
-      "Supabase client initialized and test query successful (or table not found, which is not a connection error)."
+      "Supabase client initialized and test query successful (or table 'contacts' not found, which is a schema setup step, not a connection error)."
     console.log("✅ Supabase verification successful.")
   } catch (error) {
     results.supabase.message = `Error verifying Supabase: ${error instanceof Error ? error.message : "Unknown error"}`

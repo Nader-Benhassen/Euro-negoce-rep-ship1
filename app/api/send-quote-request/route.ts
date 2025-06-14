@@ -1,85 +1,55 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { sendBrevoEmailFetch } from "@/lib/brevo-fetch"
+import { saveContact, logEmail } from "@/lib/database"
 
-export async function POST(req: NextRequest) {
+export const dynamic = "force-dynamic"
+
+export async function POST(request: Request) {
   try {
-    const body = await req.json()
-    const { firstName, lastName, email, companyName, phoneNumber, productOfInterest, quantity, message } = body
+    const formData = await request.json()
+    const { name, email, company, phone, message, selected_product } = formData
 
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px;">
-        <div style="background: #dc2626; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-          <h2 style="margin: 0;">🔥 URGENT Quote Request</h2>
-          <p style="margin: 5px 0 0 0; opacity: 0.9;">Priority response required within 24 hours</p>
-        </div>
-        
-        <div style="padding: 20px;">
-          <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #f59e0b;">
-            <p style="margin: 0; color: #92400e; font-weight: bold;">
-              ⚡ HIGH PRIORITY: Customer expects quote within 24 hours
-            </p>
-          </div>
-          
-          <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #374151; margin-top: 0;">👤 Contact Information</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 5px 0; font-weight: bold;">Name:</td><td style="padding: 5px 0;">${firstName} ${lastName}</td></tr>
-              <tr><td style="padding: 5px 0; font-weight: bold;">Email:</td><td style="padding: 5px 0;"><a href="mailto:${email}">${email}</a></td></tr>
-              <tr><td style="padding: 5px 0; font-weight: bold;">Company:</td><td style="padding: 5px 0;">${companyName}</td></tr>
-              <tr><td style="padding: 5px 0; font-weight: bold;">Phone:</td><td style="padding: 5px 0;">${phoneNumber || "Not provided"}</td></tr>
-            </table>
-          </div>
-          
-          <div style="background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="color: #374151; margin-top: 0;">📦 Product Requirements</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 5px 0; font-weight: bold;">Product of Interest:</td><td style="padding: 5px 0;">${productOfInterest}</td></tr>
-              <tr><td style="padding: 5px 0; font-weight: bold;">Quantity:</td><td style="padding: 5px 0; color: #dc2626; font-weight: bold;">${quantity}</td></tr>
-            </table>
-          </div>
-          
-          <div style="background: #f9fafb; padding: 20px; border-radius: 8px;">
-            <h3 style="color: #374151; margin-top: 0;">💬 Additional Requirements</h3>
-            <div style="background: white; padding: 15px; border-radius: 4px; border-left: 4px solid #dc2626;">
-              <p style="white-space: pre-wrap; margin: 0;">${message || "No additional requirements specified"}</p>
-            </div>
-          </div>
-          
-          <div style="margin-top: 20px; padding: 15px; background: #fee2e2; border-radius: 8px; border-left: 4px solid #dc2626;">
-            <p style="margin: 0; color: #dc2626; font-weight: bold;">
-              ⚡ ACTION REQUIRED: Respond within 24 hours<br>
-              📧 Reply directly to this email to respond to ${firstName} ${lastName}
-            </p>
-          </div>
-        </div>
-        
-        <div style="background: #f9fafb; padding: 15px; border-radius: 0 0 8px 8px; border-top: 1px solid #e5e7eb;">
-          <p style="font-size: 12px; color: #6b7280; margin: 0;">
-            📅 Sent: ${new Date().toLocaleString()}<br>
-            🌐 From: Euro Negoce Trade Website (via Brevo)
-          </p>
-        </div>
-      </div>
-    `
+    // 1. Save to database
+    const { data: contactData, error: dbError } = await saveContact({
+      name,
+      email,
+      company,
+      phone,
+      message,
+      selected_product,
+    })
+    if (dbError) {
+      throw new Error(`Database error: ${dbError.message}`)
+    }
 
-    const result = await sendBrevoEmailFetch({
-      to: "contact@euronegocetrade.com", // Correct email address
-      subject: "🔥 URGENT Quote Request - Euro Negoce Trade",
-      htmlContent: htmlContent,
+    // 2. Send email via Brevo
+    const subject = `New Quote Request for ${selected_product} from ${name}`
+    const htmlContent = `<p>Name: ${name}</p><p>Email: ${email}</p><p>Company: ${company}</p><p>Phone: ${phone}</p><p>Product: ${selected_product}</p><p>Message: ${message}</p>`
+    const emailResult = await sendBrevoEmailFetch({
+      to: "contact@euronegocetrade.com",
+      subject,
+      htmlContent,
       replyTo: email,
     })
 
-    return NextResponse.json({
-      status: "success",
-      message: "Email sent successfully via Brevo!",
-      data: result.data,
+    // 3. Log email status
+    await logEmail({
+      email_type: "quote_request",
+      recipient_email: "contact@euronegocetrade.com",
+      subject,
+      status: emailResult.success ? "sent" : "failed",
+      brevo_email_id: emailResult.data?.id || null,
+      related_contact_id: contactData?.id,
     })
+
+    if (!emailResult.success) {
+      console.error("Failed to send quote request email via Brevo:", emailResult.error)
+      return NextResponse.json({ message: "Quote request submitted, but notification email failed." }, { status: 200 })
+    }
+
+    return NextResponse.json({ message: "Quote request submitted successfully!" })
   } catch (error) {
-    console.error("❌ Quote request email failed:", error)
-    return NextResponse.json({
-      status: "error",
-      message: "Failed to send email via Brevo.",
-      error: error instanceof Error ? error.message : String(error),
-    })
+    console.error("Error handling quote request:", error)
+    return NextResponse.json({ error: "Failed to process quote request." }, { status: 500 })
   }
 }

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
-import { getEmailLogs } from "@/lib/database"
+import { getEmailLogs } from "@/lib/database" // Correct import
+
+export const dynamic = "force-dynamic" // Ensure dynamic rendering
 
 export async function GET(request: Request) {
   try {
@@ -8,7 +10,7 @@ export async function GET(request: Request) {
     const offset = Number.parseInt(url.searchParams.get("offset") || "0")
     const emailType = url.searchParams.get("type") || undefined
 
-    const result = await getEmailLogs(limit, offset, emailType)
+    const result = await getEmailLogs(limit, offset, emailType) // Uses the imported function
 
     if (!result.success) {
       return NextResponse.json({ success: false, error: result.error }, { status: 500 })
@@ -20,7 +22,7 @@ export async function GET(request: Request) {
       pagination: {
         limit,
         offset,
-        total: result.data?.length || 0,
+        total: result.count || 0, // Use count from the result
       },
     })
   } catch (error) {

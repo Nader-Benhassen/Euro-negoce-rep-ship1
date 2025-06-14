@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { sendBrevoEmailFetch, verifyBrevoApiKey } from "@/lib/brevo-fetch" // Brevo functions
 import { logEmail } from "@/lib/database" // For logging
 
+export const dynamic = "force-dynamic"
+
 export async function POST(request: Request) {
   console.log("🚀 Test email delivery process started via POST")
 

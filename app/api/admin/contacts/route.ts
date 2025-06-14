@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
-import { getContacts } from "@/lib/database"
+import { getContacts } from "@/lib/database" // Correct import
+
+export const dynamic = "force-dynamic" // Ensure dynamic rendering
 
 export async function GET(request: Request) {
   try {
@@ -8,7 +10,7 @@ export async function GET(request: Request) {
     const offset = Number.parseInt(url.searchParams.get("offset") || "0")
     const status = url.searchParams.get("status") || undefined
 
-    const result = await getContacts(limit, offset, status)
+    const result = await getContacts(limit, offset, status) // Uses the imported function
 
     if (!result.success) {
       return NextResponse.json({ success: false, error: result.error }, { status: 500 })
@@ -20,7 +22,7 @@ export async function GET(request: Request) {
       pagination: {
         limit,
         offset,
-        total: result.data?.length || 0,
+        total: result.count || 0, // Use count from the result
       },
     })
   } catch (error) {

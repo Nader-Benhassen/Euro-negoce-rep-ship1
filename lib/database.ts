@@ -37,7 +37,7 @@ let supabaseClient: SupabaseClient | null = null
 export function getSupabaseClient(): SupabaseClient {
   if (!supabaseClient) {
     const supabaseUrl = process.env.EURONEGOCE_DB_SUPABASE_URL
-    const supabaseKey = process.env.EURONEGOCE_DB_SUPABASE_ANON_KEY // Changed to use the correct ANON_KEY for client-side accessible operations if needed, or SERVICE_ROLE_KEY for server-side. Assuming ANON for general use here.
+    const supabaseKey = process.env.EURONEGOCE_DB_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseKey) {
       console.error("❌ Supabase credentials not found in environment variables (URL or ANON_KEY)")
@@ -57,95 +57,46 @@ export function getSupabaseClient(): SupabaseClient {
   return supabaseClient
 }
 
-// Save contact form submission
+// --- Data saving and logging functions ---
 export async function saveContact(contactData: ContactData) {
-  try {
-    console.log("💾 Saving contact to database:", contactData)
-    const supabase = getSupabaseClient()
-    const { data, error } = await supabase.from("contacts").insert([contactData]).select().single()
-
-    if (error) {
-      console.error("❌ Database error saving contact:", error)
-      return { success: false, error: error.message, data: null }
-    }
-    console.log("✅ Contact saved successfully:", data)
-    return { success: true, error: null, data }
-  } catch (error) {
-    console.error("❌ Exception saving contact:", error)
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error", data: null }
-  }
+  const supabase = getSupabaseClient()
+  return await supabase.from("contacts").insert([contactData]).select().single()
 }
 
-// Save scheduled call
 export async function saveScheduledCall(callData: CallData) {
-  try {
-    console.log("💾 Saving scheduled call to database:", callData)
-    const supabase = getSupabaseClient()
-    const { data, error } = await supabase.from("scheduled_calls").insert([callData]).select().single()
-
-    if (error) {
-      console.error("❌ Database error saving call:", error)
-      return { success: false, error: error.message, data: null }
-    }
-    console.log("✅ Scheduled call saved successfully:", data)
-    return { success: true, error: null, data }
-  } catch (error) {
-    console.error("❌ Exception saving call:", error)
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error", data: null }
-  }
+  const supabase = getSupabaseClient()
+  return await supabase.from("scheduled_calls").insert([callData]).select().single()
 }
 
-// Log email delivery
 export async function logEmail(emailData: EmailLogData) {
-  try {
-    console.log("📧 Logging email to database:", emailData)
-    const supabase = getSupabaseClient()
-    const { data, error } = await supabase.from("email_logs").insert([emailData]).select().single()
-
-    if (error) {
-      console.error("❌ Database error logging email:", error)
-      return { success: false, error: error.message, data: null }
-    }
-    console.log("✅ Email logged successfully:", data)
-    return { success: true, error: null, data }
-  } catch (error) {
-    console.error("❌ Exception logging email:", error)
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error", data: null }
-  }
+  const supabase = getSupabaseClient()
+  return await supabase.from("email_logs").insert([emailData]).select().single()
 }
 
-// Get all contacts (for admin)
-export async function getAllContacts() {
-  try {
-    const supabase = getSupabaseClient()
-    const { data, error } = await supabase.from("contacts").select("*").order("created_at", { ascending: false })
-    if (error) return { success: false, error: error.message, data: null }
-    return { success: true, error: null, data }
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error", data: null }
-  }
+// --- Admin data fetching functions ---
+export async function getContacts(limit = 100, offset = 0) {
+  const supabase = getSupabaseClient()
+  return await supabase
+    .from("contacts")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1)
 }
 
-// Get all scheduled calls (for admin)
-export async function getAllScheduledCalls() {
-  try {
-    const supabase = getSupabaseClient()
-    const { data, error } = await supabase.from("scheduled_calls").select("*").order("created_at", { ascending: false })
-    if (error) return { success: false, error: error.message, data: null }
-    return { success: true, error: null, data }
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error", data: null }
-  }
+export async function getScheduledCalls(limit = 100, offset = 0) {
+  const supabase = getSupabaseClient()
+  return await supabase
+    .from("scheduled_calls")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1)
 }
 
-// Get all email logs (for admin)
-export async function getAllEmailLogs() {
-  try {
-    const supabase = getSupabaseClient()
-    const { data, error } = await supabase.from("email_logs").select("*").order("created_at", { ascending: false })
-    if (error) return { success: false, error: error.message, data: null }
-    return { success: true, error: null, data }
-  } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error", data: null }
-  }
+export async function getEmailLogs(limit = 100, offset = 0) {
+  const supabase = getSupabaseClient()
+  return await supabase
+    .from("email_logs")
+    .select("*", { count: "exact" })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1)
 }
