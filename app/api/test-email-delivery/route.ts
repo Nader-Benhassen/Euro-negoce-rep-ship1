@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { sendBrevoEmailFetch, verifyBrevoApiKey } from "@/lib/brevo-fetch" // Updated import
-import { logEmail } from "@/lib/database" // Assuming this is for logging the test email
+import { sendBrevoEmailFetch, verifyBrevoApiKey } from "@/lib/brevo-fetch" // Brevo functions
+import { logEmail } from "@/lib/database" // For logging
 
 export async function POST(request: Request) {
   console.log("🚀 Test email delivery process started via POST")
@@ -42,7 +42,6 @@ export async function POST(request: Request) {
       to: testRecipientEmail,
       subject: `TEST: ${testSubject}`,
       htmlContent: htmlContent,
-      // replyTo: "noreply@euronegocetrade.com", // Optional: set a noreply
     })
 
     if (!emailResult.success) {
@@ -52,7 +51,6 @@ export async function POST(request: Request) {
         recipient_email: testRecipientEmail,
         subject: `TEST: ${testSubject}`,
         status: "failed",
-        // brevo_email_id: null, // No ID if it failed before sending
       })
       return NextResponse.json(
         { success: false, error: "Failed to send test email.", details: emailResult.error },

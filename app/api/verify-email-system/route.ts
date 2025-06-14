@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
-import { verifyBrevoApiKey } from "@/lib/brevo-fetch" // Correct import for Brevo
-import { getSupabaseClient } from "@/lib/database" // For Supabase check
+import { verifyBrevoApiKey } from "@/lib/brevo-fetch" // For Brevo checks
+import { getSupabaseClient } from "@/lib/database" // For Supabase checks
 
 export async function GET() {
   console.log("🚀 Starting email and system verification...")
@@ -27,9 +27,10 @@ export async function GET() {
       results.brevo.message = "Brevo email service is configured and API key is present."
       console.log("✅ Brevo verification successful.")
     } else if (brevoVerification.hasApiKey) {
-      results.brevo.message = "Brevo API key is present, but service could not be initialized (check SDK setup)."
+      results.brevo.message = "Brevo API key is present, but service could not be initialized."
       console.warn("⚠️ Brevo API key present, but initialization failed.")
     } else {
+      results.brevo.message = "Brevo API key not found."
       console.error("❌ Brevo API key not found.")
     }
   } catch (error) {
@@ -40,14 +41,17 @@ export async function GET() {
   // Verify Supabase connection
   try {
     const supabase = getSupabaseClient() // This will throw if not configured
-    // Attempt a simple query to test connection (optional, getSupabaseClient already checks env vars)
-    const { data, error } = await supabase.from("contacts").select("id").limit(1) // Use a table you know exists
+    // Attempt a simple query to test connection
+    const { error } = await supabase.from("contacts").select("id", { count: "exact", head: true }) // Use a table you know exists
+
     if (error && error.code !== "42P01") {
-      // 42P01 is table not found, which is fine if DB is empty but schema exists
+      // 42P01 means table doesn't exist, which is a schema issue not a connection issue.
+      console.error("❌ Supabase query failed:", error)
       throw new Error(`Supabase query failed: ${error.message}`)
     }
     results.supabase.connected = true
-    results.supabase.message = "Supabase client initialized and seems connected."
+    results.supabase.message =
+      "Supabase client initialized and test query successful (or table not found, which is not a connection error)."
     console.log("✅ Supabase verification successful.")
   } catch (error) {
     results.supabase.message = `Error verifying Supabase: ${error instanceof Error ? error.message : "Unknown error"}`
