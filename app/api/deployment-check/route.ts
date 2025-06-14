@@ -25,6 +25,7 @@ export async function GET() {
   // Check Supabase Connection
   try {
     getSupabaseClient() // This will throw if Supabase URL/Key are missing
+    // Optionally, perform a light read query if necessary, but getSupabaseClient() itself checks env vars.
     checks.push({
       name: "Supabase Client Initialization",
       status: "OK",
@@ -47,7 +48,7 @@ export async function GET() {
     checks.push({
       name: "Brevo API Key",
       status: "ERROR",
-      message: "Brevo API key is missing or client failed to init.",
+      message: brevoCheck.message, // Use message from verifyBrevoApiKey
     })
     overallStatus = "ERROR"
   }

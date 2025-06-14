@@ -2,24 +2,19 @@
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
 const FROM_EMAIL = "contact@euronegocetrade.com"
 const FROM_NAME = "Euro Negoce Trade"
-const TO_EMAIL = "contact@euronegocetrade.com"
+const TO_EMAIL = "contact@euronegocetrade.com" // Default TO for some functions
 
 export function verifyBrevoApiKey() {
-  console.log("🔑 Verifying Brevo API key...")
-
+  // console.log("🔑 Verifying Brevo API key...") // Keep console logs minimal
   const hasApiKey = !!process.env.BREVO_API_KEY
-  const keyLength = process.env.BREVO_API_KEY?.length || 0
-  const keyPrefix = process.env.BREVO_API_KEY?.substring(0, 12) + "..." || "none"
-
   const verification = {
     hasApiKey,
-    keyLength,
-    keyPrefix,
-    message: hasApiKey ? "✅ Brevo API key is loaded" : "❌ Brevo API key is missing",
-    brevoInitialized: hasApiKey,
+    keyLength: process.env.BREVO_API_KEY?.length || 0,
+    keyPrefix: process.env.BREVO_API_KEY?.substring(0, 12) + "..." || "none",
+    message: hasApiKey ? "✅ Brevo API key is loaded." : "❌ Brevo API key is missing.",
+    brevoInitialized: hasApiKey, // Simple check for presence
   }
-
-  console.log("🔑 Brevo API Key verification result:", verification)
+  // console.log("🔑 Brevo API Key verification result:", verification)
   return verification
 }
 
@@ -40,71 +35,38 @@ export async function sendBrevoEmailFetch({
   textContent?: string
   replyTo?: string
 }) {
-  console.log("📧 Starting Brevo email send process...")
-
-  try {
-    // Step 1: Verify API key
-    const keyVerification = verifyBrevoApiKey()
-    if (!keyVerification.hasApiKey) {
-      throw new Error(`Brevo API key verification failed: ${keyVerification.message}`)
-    }
-
-    // Step 2: Prepare email payload
-    const emailPayload = {
-      sender: { name: fromName, email: from },
-      to: [{ email: to }],
-      subject: subject,
-      htmlContent: htmlContent,
-      ...(textContent && { textContent }),
-      ...(replyTo && { replyTo: { email: replyTo } }),
-    }
-
-    console.log("📧 Email payload prepared:", {
-      from: `${fromName} <${from}>`,
-      to: to,
-      subject: subject,
-      hasHtml: !!htmlContent,
-      hasReplyTo: !!replyTo,
-    })
-
-    // Step 3: Send email via Brevo API
-    console.log("📧 Sending email via Brevo API...")
-
-    const response = await fetch(BREVO_API_URL, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "api-key": process.env.BREVO_API_KEY!,
-      },
-      body: JSON.stringify(emailPayload),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.text()
-      console.error("❌ Brevo API Error Response:", errorData)
-      throw new Error(`Brevo API Error: ${response.status} - ${errorData}`)
-    }
-
-    const result = await response.json()
-    console.log("✅ Email sent successfully via Brevo API!")
-    console.log("📧 Brevo response:", result)
-
-    return {
-      success: true,
-      data: {
-        id: result.messageId,
-        messageId: result.messageId,
-      },
-    }
-  } catch (error) {
-    console.error("❌ Brevo email sending failed:")
-
-    if (error instanceof Error) {
-      console.error("❌ Error message:", error.message)
-      console.error("❌ Error stack:", error.stack)
-    }
-
-    throw new Error(`Brevo email sending failed: ${error instanceof Error ? error.message : String(error)}`)
+  // console.log("📧 Starting Brevo email send process...")
+  const keyVerification = verifyBrevoApiKey()
+  if (!keyVerification.hasApiKey) {
+    throw new Error(`Brevo API key verification failed: ${keyVerification.message}`)
   }
+
+  const emailPayload = {
+    sender: { name: fromName, email: from },
+    to: [{ email: to }], // Brevo expects an array for 'to'
+    subject: subject,
+    htmlContent: htmlContent,
+    ...(textContent && { textContent }),
+    ...(replyTo && { replyTo: { email: replyTo } }),
+  }
+
+  const response = await fetch(BREVO_API_URL, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "api-key": process.env.BREVO_API_KEY!,
+    },
+    body: JSON.stringify(emailPayload),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.text()
+    console.error("❌ Brevo API Error Response:", errorData)
+    throw new Error(`Brevo API Error: ${response.status} - ${errorData}`)
+  }
+
+  const result = await response.json()
+  // console.log("✅ Email sent successfully via Brevo API. Brevo response:", result)
+  return { success: true, data: { id: result.messageId, messageId: result.messageId } }
 }

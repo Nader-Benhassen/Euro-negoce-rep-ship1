@@ -48,7 +48,6 @@ export function getSupabaseClient(): SupabaseClient {
 
     try {
       supabaseClient = createClient(supabaseUrl, supabaseKey)
-      console.log("✅ Supabase client initialized successfully")
     } catch (error) {
       console.error("❌ Failed to initialize Supabase client:", error)
       throw new Error(`Failed to initialize Supabase client: ${error instanceof Error ? error.message : String(error)}`)
@@ -60,43 +59,49 @@ export function getSupabaseClient(): SupabaseClient {
 // --- Data saving and logging functions ---
 export async function saveContact(contactData: ContactData) {
   const supabase = getSupabaseClient()
-  return await supabase.from("contacts").insert([contactData]).select().single()
+  const { data, error } = await supabase.from("contacts").insert([contactData]).select().single()
+  return { data, error, success: !error }
 }
 
 export async function saveScheduledCall(callData: CallData) {
   const supabase = getSupabaseClient()
-  return await supabase.from("scheduled_calls").insert([callData]).select().single()
+  const { data, error } = await supabase.from("scheduled_calls").insert([callData]).select().single()
+  return { data, error, success: !error }
 }
 
 export async function logEmail(emailData: EmailLogData) {
   const supabase = getSupabaseClient()
-  return await supabase.from("email_logs").insert([emailData]).select().single()
+  const { data, error } = await supabase.from("email_logs").insert([emailData]).select().single()
+  return { data, error, success: !error }
 }
 
 // --- Admin data fetching functions ---
 export async function getContacts(limit = 100, offset = 0) {
   const supabase = getSupabaseClient()
-  return await supabase
+  const { data, error, count } = await supabase
     .from("contacts")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1)
+  return { data, error, count, success: !error }
 }
 
 export async function getScheduledCalls(limit = 100, offset = 0) {
   const supabase = getSupabaseClient()
-  return await supabase
+  const { data, error, count } = await supabase
     .from("scheduled_calls")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1)
+  return { data, error, count, success: !error }
 }
 
 export async function getEmailLogs(limit = 100, offset = 0) {
   const supabase = getSupabaseClient()
-  return await supabase
+  const { data, error, count } = await supabase
     .from("email_logs")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1)
+  return { data, error, count, success: !error }
 }

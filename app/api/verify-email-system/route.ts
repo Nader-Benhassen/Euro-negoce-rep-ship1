@@ -1,69 +1,50 @@
 import { NextResponse } from "next/server"
-import { verifyBrevoApiKey } from "@/lib/brevo-fetch" // For Brevo checks
-import { getSupabaseClient } from "@/lib/database" // For Supabase checks
+import { verifyBrevoApiKey } from "@/lib/brevo-fetch" // Correct Brevo verification
+import { getSupabaseClient } from "@/lib/database" // Correct Supabase client getter
 
 export const dynamic = "force-dynamic"
 
 export async function GET() {
-  console.log("🚀 Starting email and system verification...")
   const results = {
-    brevo: {
-      configured: false,
-      apiKeyPresent: false,
-      message: "Brevo API key not found or service not initialized.",
-    },
-    supabase: {
-      connected: false,
-      message: "Supabase client not initialized or connection failed.",
-    },
-    overallStatus: "ISSUES_DETECTED",
+    brevo: { status: "PENDING", message: "Checking Brevo configuration..." },
+    supabase: { status: "PENDING", message: "Checking Supabase connection..." },
+    overallStatus: "PENDING",
     timestamp: new Date().toISOString(),
   }
 
-  // Verify Brevo configuration
+  // Check Brevo
   try {
     const brevoVerification = verifyBrevoApiKey()
-    results.brevo.apiKeyPresent = brevoVerification.hasApiKey
-    results.brevo.configured = brevoVerification.brevoInitialized
     if (brevoVerification.brevoInitialized) {
-      results.brevo.message = "Brevo email service is configured and API key is present."
-      console.log("✅ Brevo verification successful.")
-    } else if (brevoVerification.hasApiKey) {
-      results.brevo.message = "Brevo API key is present, but service could not be initialized."
-      console.warn("⚠️ Brevo API key present, but initialization failed.")
+      results.brevo = { status: "OK", message: "Brevo API key is present and client initialized." }
     } else {
-      results.brevo.message = "Brevo API key not found."
-      console.error("❌ Brevo API key not found.")
+      // brevoInitialized is false if hasApiKey is false
+      results.brevo = { status: "ERROR", message: brevoVerification.message }
     }
-  } catch (error) {
-    results.brevo.message = `Error verifying Brevo: ${error instanceof Error ? error.message : "Unknown error"}`
-    console.error("❌ Error during Brevo verification:", error)
+  } catch (e) {
+    results.brevo = { status: "ERROR", message: `Brevo check failed: ${e instanceof Error ? e.message : String(e)}` }
   }
 
-  // Verify Supabase connection
+  // Check Supabase
   try {
-    const supabase = getSupabaseClient() // This will throw if not configured
-    const { error } = await supabase.from("contacts").select("id", { count: "exact", head: true })
-
+    const supabase = getSupabaseClient()
+    const { error } = await supabase.from("contacts").select("id", { count: "exact", head: true }) // Test query
     if (error && error.code !== "42P01") {
       // "42P01" is undefined_table
-      console.error("❌ Supabase query failed:", error)
-      throw new Error(`Supabase query failed: ${error.message}`)
+      throw error
     }
-    results.supabase.connected = true
-    results.supabase.message =
-      "Supabase client initialized and test query successful (or table 'contacts' not found, which is a schema setup step, not a connection error)."
-    console.log("✅ Supabase verification successful.")
-  } catch (error) {
-    results.supabase.message = `Error verifying Supabase: ${error instanceof Error ? error.message : "Unknown error"}`
-    console.error("❌ Error during Supabase verification:", error)
+    results.supabase = { status: "OK", message: "Supabase client initialized and test query successful." }
+  } catch (e) {
+    results.supabase = {
+      status: "ERROR",
+      message: `Supabase check failed: ${e instanceof Error ? e.message : String(e)}`,
+    }
   }
 
-  if (results.brevo.configured && results.supabase.connected) {
+  if (results.brevo.status === "OK" && results.supabase.status === "OK") {
     results.overallStatus = "ALL_SYSTEMS_OPERATIONAL"
-    console.log("🎉 All systems operational.")
   } else {
-    console.warn("🚨 Issues detected in system verification.")
+    results.overallStatus = "ISSUES_DETECTED"
   }
 
   return NextResponse.json(results)
