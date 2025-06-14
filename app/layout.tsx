@@ -4,7 +4,9 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { Analytics } from "@vercel/analytics/next"
 import ErrorBoundary from "./components/error-boundary"
+import { Suspense } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -76,8 +78,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <ErrorBoundary>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
-            {children}
+            <Suspense>{children}</Suspense>
             <Toaster />
+            <Analytics />
           </ThemeProvider>
         </ErrorBoundary>
       </body>
