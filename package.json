@@ -45,11 +45,6 @@
     "typescript": "^5"
   },
   "engines": {
-    "node": "18.x",
-    "npm": "9.x"
-  },
-  "overrides": {
-    "@types/react": "18.2.33",
-    "@types/react-dom": "18.2.14"
+    "node": "18.x"
   }
 }
