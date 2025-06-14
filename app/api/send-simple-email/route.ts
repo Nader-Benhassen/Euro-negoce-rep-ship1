@@ -38,58 +38,6 @@ Reply to: ${email}
     // Try multiple email methods
     const methods = []
 
-    // Method 1: Resend (if available)
-    if (process.env.RESEND_API_KEY) {
-      try {
-        const resendData = {
-          from: "noreply@euronegocetrade.com",
-          to: ["euronegoce.mail@gmail.com"],
-          reply_to: email,
-          subject: emailContent.subject,
-          text: emailContent.content,
-          html: `
-            <div style="font-family: monospace; white-space: pre-wrap; background: #f9f9f9; padding: 20px; border-radius: 8px;">
-              ${emailContent.content.replace(/\n/g, "<br>")}
-            </div>
-          `,
-        }
-
-        const resendResponse = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(resendData),
-        })
-
-        const resendResult = await resendResponse.json()
-
-        methods.push({
-          method: "Resend",
-          success: resendResponse.ok,
-          result: resendResult,
-          status: resendResponse.status,
-        })
-
-        if (resendResponse.ok) {
-          console.log("✅ Email sent via Resend:", resendResult.id)
-          return Response.json({
-            success: true,
-            message: "Email sent successfully via Resend",
-            method: "Resend",
-            emailId: resendResult.id,
-          })
-        }
-      } catch (resendError) {
-        methods.push({
-          method: "Resend",
-          success: false,
-          error: resendError.message,
-        })
-      }
-    }
-
     // Method 2: Webhook/HTTP notification (fallback)
     try {
       // This creates a log that can be monitored

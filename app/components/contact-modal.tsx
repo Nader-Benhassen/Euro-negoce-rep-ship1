@@ -2,8 +2,8 @@
 
 import type React from "react"
 import { useState } from "react"
-import { X, Send, CheckCircle } from "lucide-react"
-import { sendQuoteRequest } from "../actions/send-email"
+import { X, Send, CheckCircle, AlertCircle } from "lucide-react"
+import { sendQuoteRequest } from "../actions/send-quote-action"
 
 interface ContactModalProps {
   isOpen: boolean
@@ -15,6 +15,7 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [submitMessage, setSubmitMessage] = useState("")
+  const [isError, setIsError] = useState(false)
   const [showProductSelector, setShowProductSelector] = useState(false)
   const [selectedProducts, setSelectedProducts] = useState(preSelectedProduct ? [preSelectedProduct] : [])
 
@@ -55,11 +56,11 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setSubmitting(true)
+    setSubmitMessage("")
+    setIsError(false)
 
     try {
       const formData = new FormData(e.currentTarget)
-
-      // Add selected products to form data
       const selectedProductsString = selectedProducts.map((p) => p.name).join(", ")
       formData.append("selectedProducts", selectedProductsString)
 
@@ -68,21 +69,28 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
       if (result.success) {
         setSubmitted(true)
         setSubmitMessage(result.message)
+      } else {
+        setSubmitted(false)
+        setSubmitMessage(result.message)
+        setIsError(true)
       }
     } catch (error) {
       console.error("Error sending quote request:", error)
+      setSubmitted(false)
       setSubmitMessage(
-        "There was an error sending your quote request. Please try again or contact us directly at euronegoce.mail@gmail.com",
+        "A client-side error occurred. Please try again or contact us directly at contact@euronegocetrade.com",
       )
+      setIsError(true)
     } finally {
       setSubmitting(false)
     }
   }
 
   const resetForm = () => {
-    setSelectedProducts([])
+    setSelectedProducts(preSelectedProduct ? [preSelectedProduct] : [])
     setSubmitted(false)
     setSubmitMessage("")
+    setIsError(false)
   }
 
   if (!isOpen) return null
@@ -90,7 +98,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
         <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white py-6 px-8 flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold">Request a Quote</h2>
@@ -105,7 +112,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
           </button>
         </div>
 
-        {/* Content */}
         <div className="p-8 overflow-y-auto max-h-[calc(90vh-120px)]">
           {submitted ? (
             <div className="text-center py-8">
@@ -137,7 +143,13 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Contact Information */}
+              {isError && submitMessage && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+                  <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
+                  <p className="text-red-700 text-sm">{submitMessage}</p>
+                </div>
+              )}
+
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
                 <div className="grid md:grid-cols-2 gap-6">
@@ -198,11 +210,8 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                 </div>
               </div>
 
-              {/* Product Selection */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Product Selection</h3>
-
-                {/* Selected Products Display */}
                 {selectedProducts.length > 0 && (
                   <div className="mb-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Products:</h4>
@@ -225,7 +234,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                     </div>
                   </div>
                 )}
-
                 <button
                   type="button"
                   onClick={() => setShowProductSelector(!showProductSelector)}
@@ -233,8 +241,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                 >
                   {showProductSelector ? "Hide Product Selection" : "Select Products from Catalog"}
                 </button>
-
-                {/* Product Selector */}
                 {showProductSelector && (
                   <div className="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
@@ -258,7 +264,7 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                               <div
                                 className={`w-5 h-5 rounded-full border-2 ${
                                   isSelected ? "bg-green-500 border-green-500" : "border-gray-300"
-                                }`}
+                                } flex items-center justify-center`}
                               >
                                 {isSelected && <CheckCircle size={16} className="text-white" />}
                               </div>
@@ -269,8 +275,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                     </div>
                   </div>
                 )}
-
-                {/* Custom Products */}
                 <div className="mt-4">
                   <label htmlFor="customProducts" className="block text-sm font-medium text-gray-700 mb-2">
                     Other Products (not listed above)
@@ -285,7 +289,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                 </div>
               </div>
 
-              {/* Order Details */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Order Details</h3>
                 <div className="grid md:grid-cols-2 gap-6">

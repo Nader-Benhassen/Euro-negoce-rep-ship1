@@ -167,7 +167,7 @@ curl https://your-domain.com/api/admin/emails
    \`\`\`bash
    # Test Brevo API key
    curl -X GET "https://api.brevo.com/v3/account" \
-        -H "api-key: YOUR_API_KEY"
+        -H "api-key: YOUR_BREVO_API_KEY"
    
    # Check environment variables
    # Verify domain authentication in Brevo
@@ -183,7 +183,7 @@ curl https://your-domain.com/api/admin/emails
 4. **Domain Issues**
    \`\`\`bash
    # Check DNS propagation
-   dig www.euronegocetrade.com
+   dig www.euronegocetrade.euronegocetrade.com
    
    # Verify SSL certificate
    curl -I https://www.euronegocetrade.com
@@ -227,6 +227,3 @@ Your deployment is successful when:
 - [ ] Domain redirects work properly
 
 🎉 **Congratulations! Your Euro Negoce Trade website is live!**
-\`\`\`
-
-Let me also create a deployment verification script:
