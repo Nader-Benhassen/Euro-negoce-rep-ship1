@@ -33,7 +33,18 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Package locks (let Vercel generate fresh ones)
+# IDE
+.vscode/
+.idea/
+
+# API Keys and Secrets (SECURITY)
+*.key
+*.pem
+*.p12
+secrets/
+
+# Keep package-lock.json for consistent deployments
+# package-lock.json (commented out - we want to keep this file)
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
