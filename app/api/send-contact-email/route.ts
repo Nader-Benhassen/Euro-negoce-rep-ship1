@@ -137,7 +137,12 @@ export async function POST(request: Request) {
 
     // Step 6: Send email using Brevo API
     console.log("🚀 Step 6: Attempting to send email via Brevo API...")
+
+    // Use the correct recipient email
+    const recipientEmail = "contact@euronegocetrade.com"
+
     const result = await sendBrevoEmailFetch({
+      to: recipientEmail,
       subject: `🔔 New Contact: ${sanitizedData.name}${sanitizedData.company ? ` - ${sanitizedData.company}` : ""}`,
       htmlContent: htmlContent,
       replyTo: sanitizedData.email,
@@ -149,7 +154,7 @@ export async function POST(request: Request) {
     console.log("🚀 Step 7: Logging email delivery...")
     await logEmail({
       email_type: "contact_form",
-      recipient_email: "contact@euronegocetrade.com",
+      recipient_email: recipientEmail,
       subject: `🔔 New Contact: ${sanitizedData.name}${sanitizedData.company ? ` - ${sanitizedData.company}` : ""}`,
       status: "sent",
       brevo_email_id: result.data?.id || null,
@@ -171,6 +176,7 @@ export async function POST(request: Request) {
         contactId: contactResult.data?.id,
         databaseSaved: contactResult.success,
         emailService: "Brevo",
+        recipientEmail: recipientEmail,
       },
     })
   } catch (error) {

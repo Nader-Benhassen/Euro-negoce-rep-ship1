@@ -1,11 +1,11 @@
 // Environment configuration with validation
 export const config = {
-  // Email Configuration - Now using Brevo
+  // Email Configuration - Using Brevo
   brevo: {
     apiKey: process.env.BREVO_API_KEY || "",
     fromEmail: "contact@euronegocetrade.com",
     fromName: "Euro Negoce Trade",
-    toEmail: "contact@euronegocetrade.com",
+    toEmail: "contact@euronegocetrade.com", // Correct receiving email
   },
 
   // Site Configuration

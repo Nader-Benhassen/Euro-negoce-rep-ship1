@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
     `
 
     const result = await sendBrevoEmailFetch({
+      to: "contact@euronegocetrade.com", // Correct email address
       subject: "🔥 URGENT Quote Request - Euro Negoce Trade",
       htmlContent: htmlContent,
       replyTo: email,

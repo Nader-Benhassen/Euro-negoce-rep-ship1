@@ -1,4 +1,4 @@
-// Alternative Brevo implementation using fetch API
+// Brevo email implementation using fetch API
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
 const FROM_EMAIL = "contact@euronegocetrade.com"
 const FROM_NAME = "Euro Negoce Trade"
@@ -40,7 +40,7 @@ export async function sendBrevoEmailFetch({
   textContent?: string
   replyTo?: string
 }) {
-  console.log("📧 Starting Brevo email send process via Fetch API...")
+  console.log("📧 Starting Brevo email send process...")
 
   try {
     // Step 1: Verify API key
@@ -68,7 +68,7 @@ export async function sendBrevoEmailFetch({
     })
 
     // Step 3: Send email via Brevo API
-    console.log("📧 Sending email via Brevo Fetch API...")
+    console.log("📧 Sending email via Brevo API...")
 
     const response = await fetch(BREVO_API_URL, {
       method: "POST",
@@ -87,7 +87,7 @@ export async function sendBrevoEmailFetch({
     }
 
     const result = await response.json()
-    console.log("✅ Email sent successfully via Brevo Fetch API!")
+    console.log("✅ Email sent successfully via Brevo API!")
     console.log("📧 Brevo response:", result)
 
     return {
