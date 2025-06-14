@@ -1200,8 +1200,8 @@ export default function EuroNegoceWebsite() {
         showScheduler={showScheduler}
         setShowScheduler={setShowScheduler}
       />
-      <ProductGallery />
       <GlobalOperationsSection />
+      <ProductGallery />
       <Testimonials />
       <Footer />
 
