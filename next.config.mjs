@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Build configuration
-  output: 'standalone',
+  // Remove output: 'standalone' as it can cause deployment issues
   
-  // Error handling for deployment
+  // Build configuration
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -11,10 +10,10 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   
-  // Image optimization
+  // Image optimization - simplified for deployment
   images: {
     unoptimized: true,
-    domains: ['placeholder.svg'],
+    domains: [],
     remotePatterns: [
       {
         protocol: 'https',
@@ -44,34 +43,16 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   trailingSlash: false,
-  swcMinify: true,
   
-  // Headers for security and performance
+  // Simplified headers to avoid deployment issues
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
-          },
-        ],
-      },
-      {
-        source: '/api/(.*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate',
           },
         ],
       },
