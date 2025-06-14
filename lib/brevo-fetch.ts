@@ -42,7 +42,7 @@ export async function sendBrevoEmailFetch({
   const keyVerification = verifyBrevoApiKey()
   if (!keyVerification.hasApiKey) {
     const errorMessage = `Brevo API key verification failed: ${keyVerification.message}`
-    console.error(errorMessage)
+    console.error("BREVO_FETCH:", errorMessage)
     return { success: false, error: errorMessage, data: null }
   }
 
@@ -80,18 +80,24 @@ export async function sendBrevoEmailFetch({
 
     if (!response.ok) {
       const errorData = await response.text()
-      console.error("❌ Brevo API Error Response:", { status: response.status, body: errorData })
+      console.error("❌ BREVO_FETCH: Brevo API Error Response:", {
+        status: response.status,
+        body: errorData,
+        to,
+        subject,
+      })
       return { success: false, error: `Brevo API Error: ${response.status} - ${errorData}`, data: null }
     }
 
     const result = await response.json()
+    // console.log("✅ BREVO_FETCH: Email sent successfully via Brevo API. Brevo response:", result);
     return {
       success: true,
-      data: { id: result.messageId || result.messageID, messageId: result.messageId || result.messageID },
+      data: { id: result.messageId || result.messageID, messageId: result.messageId || result.messageID }, // Brevo sometimes uses messageID
       error: null,
     }
   } catch (error: any) {
-    console.error("❌ Error sending email via Brevo Fetch:", error)
+    console.error("❌ BREVO_FETCH: Error sending email via Brevo Fetch:", { error: error.message, to, subject })
     return { success: false, error: error.message || "Unknown error during fetch.", data: null }
   }
 }
