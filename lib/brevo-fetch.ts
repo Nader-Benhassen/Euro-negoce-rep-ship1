@@ -43,8 +43,6 @@ export async function sendBrevoEmailFetch({
   if (!keyVerification.hasApiKey) {
     const errorMessage = `Brevo API key verification failed: ${keyVerification.message}`
     console.error(errorMessage)
-    // For server-side functions, throwing an error is often better
-    // For client-facing errors, you might return a specific error object
     return { success: false, error: errorMessage, data: null }
   }
 
@@ -59,14 +57,14 @@ export async function sendBrevoEmailFetch({
     replyTo?: { email: string; name?: string }
   } = {
     sender: { name: fromName, email: from },
-    to: [{ email: to }], // Brevo expects an array for 'to'
+    to: [{ email: to }],
     subject: subject,
     htmlContent: htmlContent,
     textContent: effectiveTextContent,
   }
 
   if (replyTo) {
-    emailPayload.replyTo = { email: replyTo } // Brevo expects an object with an email property
+    emailPayload.replyTo = { email: replyTo }
   }
 
   try {
@@ -82,7 +80,7 @@ export async function sendBrevoEmailFetch({
 
     if (!response.ok) {
       const errorData = await response.text()
-      console.error("❌ Brevo API Error Response:", errorData)
+      console.error("❌ Brevo API Error Response:", { status: response.status, body: errorData })
       return { success: false, error: `Brevo API Error: ${response.status} - ${errorData}`, data: null }
     }
 
@@ -91,7 +89,7 @@ export async function sendBrevoEmailFetch({
       success: true,
       data: { id: result.messageId || result.messageID, messageId: result.messageId || result.messageID },
       error: null,
-    } // Brevo sometimes uses messageID
+    }
   } catch (error: any) {
     console.error("❌ Error sending email via Brevo Fetch:", error)
     return { success: false, error: error.message || "Unknown error during fetch.", data: null }
