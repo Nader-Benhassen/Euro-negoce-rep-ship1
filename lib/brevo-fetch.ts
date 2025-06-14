@@ -1,8 +1,8 @@
 // Brevo email implementation using fetch API
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
-const FROM_EMAIL = "contact@euronegocetrade.com"
+const FROM_EMAIL = "contact@euronegocetrade.com" // Your verified sender email
 const FROM_NAME = "Euro Negoce Trade"
-const TO_EMAIL = "contact@euronegocetrade.com" // Default TO for some functions
+const TO_EMAIL = "contact@euronegocetrade.com" // Default TO for internal notifications
 
 export function verifyBrevoApiKey() {
   const hasApiKey = !!process.env.BREVO_API_KEY
@@ -16,14 +16,20 @@ export function verifyBrevoApiKey() {
   return verification
 }
 
+// Basic function to strip HTML tags for a plain text version
+function stripHtml(html: string): string {
+  if (!html) return ""
+  return html.replace(/<[^>]*>?/gm, "")
+}
+
 export async function sendBrevoEmailFetch({
   to = TO_EMAIL,
   from = FROM_EMAIL,
   fromName = FROM_NAME,
   subject,
   htmlContent,
-  textContent,
-  replyTo,
+  textContent, // Allow explicit textContent
+  replyTo, // This should be the submitter's email for contact/quote forms
 }: {
   to?: string
   from?: string
@@ -35,35 +41,59 @@ export async function sendBrevoEmailFetch({
 }) {
   const keyVerification = verifyBrevoApiKey()
   if (!keyVerification.hasApiKey) {
-    console.error(`Brevo API key verification failed: ${keyVerification.message}`)
-    throw new Error(`Brevo API key verification failed: ${keyVerification.message}`)
+    const errorMessage = `Brevo API key verification failed: ${keyVerification.message}`
+    console.error(errorMessage)
+    // For server-side functions, throwing an error is often better
+    // For client-facing errors, you might return a specific error object
+    return { success: false, error: errorMessage, data: null }
   }
 
-  const emailPayload = {
+  const effectiveTextContent = textContent || stripHtml(htmlContent)
+
+  const emailPayload: {
+    sender: { name: string; email: string }
+    to: { email: string }[]
+    subject: string
+    htmlContent: string
+    textContent: string
+    replyTo?: { email: string; name?: string }
+  } = {
     sender: { name: fromName, email: from },
-    to: [{ email: to }],
+    to: [{ email: to }], // Brevo expects an array for 'to'
     subject: subject,
     htmlContent: htmlContent,
-    ...(textContent && { textContent }),
-    ...(replyTo && { replyTo: { email: replyTo } }),
+    textContent: effectiveTextContent,
   }
 
-  const response = await fetch(BREVO_API_URL, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "api-key": process.env.BREVO_API_KEY!,
-    },
-    body: JSON.stringify(emailPayload),
-  })
-
-  if (!response.ok) {
-    const errorData = await response.text()
-    console.error("❌ Brevo API Error Response:", errorData)
-    return { success: false, error: `Brevo API Error: ${response.status} - ${errorData}` }
+  if (replyTo) {
+    emailPayload.replyTo = { email: replyTo } // Brevo expects an object with an email property
   }
 
-  const result = await response.json()
-  return { success: true, data: { id: result.messageId, messageId: result.messageId } }
+  try {
+    const response = await fetch(BREVO_API_URL, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "api-key": process.env.BREVO_API_KEY!,
+      },
+      body: JSON.stringify(emailPayload),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.text()
+      console.error("❌ Brevo API Error Response:", errorData)
+      return { success: false, error: `Brevo API Error: ${response.status} - ${errorData}`, data: null }
+    }
+
+    const result = await response.json()
+    return {
+      success: true,
+      data: { id: result.messageId || result.messageID, messageId: result.messageId || result.messageID },
+      error: null,
+    } // Brevo sometimes uses messageID
+  } catch (error: any) {
+    console.error("❌ Error sending email via Brevo Fetch:", error)
+    return { success: false, error: error.message || "Unknown error during fetch.", data: null }
+  }
 }
