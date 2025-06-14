@@ -3,39 +3,39 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 import ErrorBoundary from "./components/error-boundary"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Euro Negoce - International Trade Company",
+  title: "Euro Negoce Trade - Premium Agricultural Products",
   description:
-    "Premier international trade company specializing in fresh fruits, vegetables, and premium edible oils for wholesale and retail markets.",
-  keywords: "international trade, fresh fruits, vegetables, edible oils, wholesale, retail, Tunisia, export, import",
-  authors: [{ name: "Euro Negoce" }],
-  creator: "Euro Negoce",
-  publisher: "Euro Negoce",
+    "Leading supplier of premium agricultural products from Tunisia and across the Mediterranean. Quality fruits, vegetables, oils, and specialty products.",
+  keywords: "agricultural products, Tunisia, Mediterranean, fruits, vegetables, olive oil, export, import, trade",
+  authors: [{ name: "Euro Negoce Trade" }],
+  creator: "Euro Negoce Trade",
+  publisher: "Euro Negoce Trade",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://euronegoce.com"),
+  metadataBase: new URL("https://www.euronegocetrade.com"),
   alternates: {
-    canonical: "/",
+    canonical: "https://www.euronegocetrade.com",
   },
   openGraph: {
-    title: "Euro Negoce - International Trade Company",
-    description:
-      "Premier international trade company specializing in fresh fruits, vegetables, and premium edible oils.",
-    url: "https://euronegoce.com",
-    siteName: "Euro Negoce",
+    title: "Euro Negoce Trade - Premium Agricultural Products",
+    description: "Leading supplier of premium agricultural products from Tunisia and across the Mediterranean.",
+    url: "https://www.euronegocetrade.com",
+    siteName: "Euro Negoce Trade",
     images: [
       {
-        url: "/opengraph-image.png",
+        url: "/placeholder.jpg",
         width: 1200,
         height: 630,
-        alt: "Euro Negoce - International Trade Company",
+        alt: "Euro Negoce Trade - Premium Agricultural Products",
       },
     ],
     locale: "en_US",
@@ -43,10 +43,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Euro Negoce - International Trade Company",
-    description:
-      "Premier international trade company specializing in fresh fruits, vegetables, and premium edible oils.",
-    images: ["/opengraph-image.png"],
+    title: "Euro Negoce Trade - Premium Agricultural Products",
+    description: "Leading supplier of premium agricultural products from Tunisia and across the Mediterranean.",
+    images: ["/placeholder.jpg"],
   },
   robots: {
     index: true,
@@ -59,9 +58,6 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: "fe009b203c155ab9",
-  },
     generator: 'v0.dev'
 }
 
@@ -72,10 +68,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.json" />
+      </head>
       <body className={inter.className}>
         <ErrorBoundary>
           <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
             {children}
+            <Toaster />
           </ThemeProvider>
         </ErrorBoundary>
       </body>
