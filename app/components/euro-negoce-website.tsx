@@ -27,6 +27,7 @@ import ProductDetailModal from "./product-detail-modal"
 import { useMediaQuery } from "../../hooks/use-media-query"
 import AppointmentScheduler from "./appointment-scheduler"
 import ChatBot from "./chatbot/chat-bot"
+import { ChatProvider } from "./chatbot/chat-context" // Import ChatProvider
 
 // Translation hook
 const useTranslation = () => {
@@ -1190,31 +1191,32 @@ export default function EuroNegoceWebsite() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white">
-      <Header />
-      <Hero
-        showContactModal={showContactModal}
-        setShowContactModal={setShowContactModal}
-        showProductsModal={showProductsModal}
-        setShowProductsModal={setShowProductsModal}
-        showScheduler={showScheduler}
-        setShowScheduler={setShowScheduler}
-      />
-      <GlobalOperationsSection />
-      <ProductGallery />
-      <Testimonials />
-      <Footer />
-
-      {/* Modals */}
-      <ContactModal isOpen={showContactModal} onClose={() => setShowContactModal(false)} />
-      <ProductsModal isOpen={showProductsModal} onClose={() => setShowProductsModal(false)} />
-      <AppointmentScheduler isOpen={showScheduler} onClose={() => setShowScheduler(false)} />
-
-      {/* Cookie Consent */}
-      <CookieConsent />
-
-      {/* Chatbot */}
-      <ChatBot />
-    </div>
+    <ChatProvider>
+      {" "}
+      {/* Wrap the content with ChatProvider */}
+      <div className="min-h-screen bg-white">
+        <Header />
+        <Hero
+          showContactModal={showContactModal}
+          setShowContactModal={setShowContactModal}
+          showProductsModal={showProductsModal}
+          setShowProductsModal={setShowProductsModal}
+          showScheduler={showScheduler}
+          setShowScheduler={setShowScheduler}
+        />
+        <GlobalOperationsSection />
+        <ProductGallery />
+        <Testimonials />
+        <Footer />
+        {/* Modals */}
+        <ContactModal isOpen={showContactModal} onClose={() => setShowContactModal(false)} />
+        <ProductsModal isOpen={showProductsModal} onClose={() => setShowProductsModal(false)} />
+        <AppointmentScheduler isOpen={showScheduler} onClose={() => setShowScheduler(false)} />
+        {/* Cookie Consent */}
+        <CookieConsent />
+        {/* Chatbot */}
+        <ChatBot /> {/* ChatBot is now a child of ChatProvider */}
+      </div>
+    </ChatProvider>
   )
 }

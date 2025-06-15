@@ -20,6 +20,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const openQuoteModal = () => {
     if (isClient) {
+      console.log("ChatContext: Dispatching openQuoteModal event")
       const event = new CustomEvent("openQuoteModal")
       window.dispatchEvent(event)
     }
@@ -27,6 +28,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const openContactModal = () => {
     if (isClient) {
+      console.log("ChatContext: Dispatching openContactModal event")
       const event = new CustomEvent("openContactModal")
       window.dispatchEvent(event)
     }
@@ -34,6 +36,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const openCallScheduler = () => {
     if (isClient) {
+      console.log("ChatContext: Dispatching openCallScheduler event")
       const event = new CustomEvent("openCallScheduler")
       window.dispatchEvent(event)
     }
@@ -41,6 +44,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const openProductsModal = () => {
     if (isClient) {
+      console.log("ChatContext: Dispatching openProductsModal event")
       const event = new CustomEvent("openProductsModal")
       window.dispatchEvent(event)
     }

@@ -18,6 +18,7 @@ import {
   User,
   Building2,
 } from "lucide-react"
+import { useChat } from "./chat-context"
 
 interface Message {
   id: string
@@ -31,12 +32,8 @@ interface Message {
   entities?: string[]
 }
 
-interface ChatBotProps {
-  onOpenProducts?: () => void
-  onOpenContact?: () => void
-  onOpenQuote?: () => void
-  onOpenAppointment?: () => void
-}
+// The ChatBotProps interface is no longer needed for actions, simplifying the component.
+type ChatBotProps = {}
 
 interface QuickAction {
   id: string
@@ -59,7 +56,7 @@ interface ProductInfo {
   qualityGrades?: string[]
 }
 
-export default function ChatBot({ onOpenProducts, onOpenContact, onOpenQuote, onOpenAppointment }: ChatBotProps) {
+export default function ChatBot({}: ChatBotProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
@@ -77,6 +74,9 @@ export default function ChatBot({ onOpenProducts, onOpenContact, onOpenQuote, on
     location: "",
     businessType: "",
   })
+
+  // Use the chat context to get modal-opening functions directly
+  const { openProductsModal, openContactModal, openQuoteModal, openCallScheduler } = useChat()
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -214,33 +214,34 @@ export default function ChatBot({ onOpenProducts, onOpenContact, onOpenQuote, on
     },
   }
 
+  // The actions now use the functions from the useChat hook directly.
   const quickActions: QuickAction[] = [
     {
       id: "products",
       label: "Product Catalog",
       icon: <Package size={18} />,
-      action: () => onOpenProducts?.(),
+      action: openProductsModal,
       description: "Browse our premium products",
     },
     {
       id: "quote",
       label: "Request Quote",
       icon: <Calculator size={18} />,
-      action: () => onOpenQuote?.(),
+      action: openQuoteModal,
       description: "Get pricing information",
     },
     {
       id: "consultation",
       label: "Expert Consultation",
       icon: <Phone size={18} />,
-      action: () => onOpenAppointment?.(),
+      action: openCallScheduler,
       description: "Schedule with specialists",
     },
     {
       id: "contact",
       label: "Contact Support",
       icon: <Mail size={18} />,
-      action: () => onOpenContact?.(),
+      action: openContactModal,
       description: "Reach our support team",
     },
   ]
@@ -345,7 +346,6 @@ How can I help you today?`,
     setIsTyping(true)
     addTypingIndicator()
 
-    // Shorter delay for concise responses
     const delay = Math.min(800 + text.length * 8, 2500)
 
     setTimeout(() => {
@@ -359,7 +359,6 @@ How can I help you today?`,
     const entities: string[] = []
     const productKeywords = Object.keys(productDatabase)
 
-    // Extract product mentions
     productKeywords.forEach((product) => {
       const normalizedProduct = product.replace("-", " ")
       if (text.toLowerCase().includes(normalizedProduct)) {
@@ -367,7 +366,6 @@ How can I help you today?`,
       }
     })
 
-    // Extract topics
     const topicKeywords = {
       pricing: ["price", "cost", "quote", "pricing", "rate", "fee", "charge"],
       shipping: ["shipping", "delivery", "logistics", "transport", "freight"],
@@ -390,7 +388,6 @@ How can I help you today?`,
       newContext.queryCount += 1
       newContext.lastQuery = userMessage
 
-      // Update topics and products
       entities.forEach((entity) => {
         if (Object.keys(productDatabase).includes(entity)) {
           if (!newContext.products.includes(entity)) {
@@ -409,10 +406,8 @@ How can I help you today?`,
     const message = userMessage.toLowerCase()
     const entities = extractEntities(userMessage)
 
-    // Update conversation context
     updateConversationContext(userMessage, entities)
 
-    // Handle pricing requests - redirect to quote form
     if (
       message.includes("price") ||
       message.includes("cost") ||
@@ -421,8 +416,7 @@ How can I help you today?`,
       message.includes("minimum order") ||
       message.includes("moq")
     ) {
-      setTimeout(() => onOpenQuote?.(), 1500)
-
+      setTimeout(() => openQuoteModal(), 1500)
       return {
         text: `For pricing information and quotes, please use our quote request form. Our sales team will provide you with competitive pricing based on your specific requirements.
 
@@ -431,10 +425,8 @@ I'll open the quote form for you now.`,
       }
     }
 
-    // Olive Oil Information
     if (message.includes("olive oil") || message.includes("olives")) {
       const product = productDatabase["olive-oil"]
-
       return {
         text: `**${product.name}**
 
@@ -455,10 +447,8 @@ Would you like more details about quality standards or shipping information?`,
       }
     }
 
-    // Rapeseed Oil Information
     if (message.includes("rapeseed") || message.includes("canola")) {
       const product = productDatabase["rapeseed-oil"]
-
       return {
         text: `**${product.name}**
 
@@ -479,7 +469,6 @@ Perfect for high-heat cooking and food manufacturing.`,
       }
     }
 
-    // Fresh Produce Information
     if (
       message.includes("fruit") ||
       message.includes("orange") ||
@@ -489,7 +478,6 @@ Perfect for high-heat cooking and food manufacturing.`,
       message.includes("pear") ||
       message.includes("artichoke")
     ) {
-      // Handle general fruit/produce queries
       if (
         message.includes("fruit") &&
         !message.includes("orange") &&
@@ -523,7 +511,6 @@ All products come with complete traceability and quality guarantees. Which speci
       if (message.includes("artichoke")) specificProduce = "artichoke"
 
       const product = productDatabase[specificProduce]
-
       return {
         text: `**${product.name}**
 
@@ -542,7 +529,6 @@ Fresh, high-quality produce with complete traceability.`,
       }
     }
 
-    // Shipping Information
     if (message.includes("shipping") || message.includes("delivery") || message.includes("logistics")) {
       return {
         text: `**Shipping & Logistics**
@@ -565,7 +551,6 @@ Which destination are you interested in?`,
       }
     }
 
-    // Quality Information (without certifications)
     if (message.includes("quality") || message.includes("standard") || message.includes("compliance")) {
       return {
         text: `**Quality Assurance**
@@ -585,7 +570,6 @@ Would you like specific information about our testing procedures?`,
       }
     }
 
-    // Company Information
     if (message.includes("company") || message.includes("about") || message.includes("euro negoce")) {
       return {
         text: `**About Euro Negoce**
@@ -606,15 +590,13 @@ How can we serve your business needs?`,
       }
     }
 
-    // Contact Information
     if (
       message.includes("contact") ||
       message.includes("reach") ||
       message.includes("phone") ||
       message.includes("email")
     ) {
-      setTimeout(() => onOpenContact?.(), 1500)
-
+      setTimeout(() => openContactModal(), 1500)
       return {
         text: `**Contact Information**
 
@@ -638,15 +620,13 @@ I'll open our contact form for you.`,
       }
     }
 
-    // Consultation Scheduling
     if (
       message.includes("call") ||
       message.includes("meeting") ||
       message.includes("schedule") ||
       message.includes("consultation")
     ) {
-      setTimeout(() => onOpenAppointment?.(), 1500)
-
+      setTimeout(() => openCallScheduler(), 1500)
       return {
         text: `**Expert Consultation**
 
@@ -668,7 +648,6 @@ I'll open our scheduling system for you.`,
       }
     }
 
-    // Default response
     return {
       text: `I can help you with information about our products, quality standards, shipping, and services.
 
@@ -973,12 +952,14 @@ What specific information would you like to know?`,
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask about products, quality, shipping, or services..."
-              className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent pr-16 bg-slate-50 focus:bg-white transition-colors duration-200"
+              className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent pr-20 bg-slate-50 focus:bg-white transition-colors duration-200"
               disabled={isTyping}
               maxLength={300}
             />
 
-            <div className="absolute bottom-2 right-14 text-xs text-slate-400">{inputValue.length}/300</div>
+            <div className="absolute top-1/2 -translate-y-1/2 right-3 text-xs text-slate-400 pointer-events-none">
+              {inputValue.length}/300
+            </div>
           </div>
 
           <button
