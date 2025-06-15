@@ -8,7 +8,6 @@ export interface ContactData {
   phone?: string | null
   message: string
   selected_product?: string | null
-  // status?: string | null; // Add if you plan to use the status column from contacts table
 }
 
 export interface CallData {
@@ -38,21 +37,18 @@ export interface EmailLogData {
   recipient_email: string
   subject: string
   status: "sent" | "failed" | "pending"
-  resend_email_id?: string | null // Changed from brevo_email_id to match schema
-  related_contact_id?: string | null // Changed type from number to string for UUID
-  related_call_id?: string | null // Changed type from number to string for UUID
-  related_quote_id?: string | null // Added for quote requests, type string for UUID
-  error_message?: string | null // Added to match schema
+  resend_email_id?: string | null
+  related_contact_id?: string | null
+  related_call_id?: string | null
+  related_quote_id?: string | null
+  error_message?: string | null
 }
 
-// Create a singleton Supabase client
-let supabaseServerClient: SupabaseClient | null = null // Renamed for clarity
+let supabaseServerClientInstance: SupabaseClient | null = null
 
-// Function to get Supabase client for SERVER-SIDE operations (uses service_role key)
 export function getSupabaseServerClient(): SupabaseClient {
-  if (!supabaseServerClient) {
+  if (!supabaseServerClientInstance) {
     const supabaseUrl = process.env.EURONEGOCE_DB_SUPABASE_URL
-    // IMPORTANT: Use the SERVICE_ROLE key for server-side operations to bypass RLS
     const supabaseServiceRoleKey = process.env.EURONEGOCE_DB_SUPABASE_SERVICE_ROLE_KEY
 
     if (!supabaseUrl || !supabaseServiceRoleKey) {
@@ -65,9 +61,8 @@ export function getSupabaseServerClient(): SupabaseClient {
     }
 
     try {
-      supabaseServerClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      supabaseServerClientInstance = createClient(supabaseUrl, supabaseServiceRoleKey, {
         auth: {
-          // Disable auto-refreshing of tokens for service role client
           autoRefreshToken: false,
           persistSession: false,
         },
@@ -80,11 +75,19 @@ export function getSupabaseServerClient(): SupabaseClient {
       )
     }
   }
-  return supabaseServerClient
+  return supabaseServerClientInstance
 }
 
-// --- Data saving and logging functions ---
-// These functions will now use the server client
+// ALIAS: Export getSupabaseClient as an alias to getSupabaseServerClient
+// This is to satisfy any lingering imports during the build process.
+// All new code should use getSupabaseServerClient directly or via helper functions.
+export function getSupabaseClient(): SupabaseClient {
+  console.warn(
+    "⚠️ DEPRECATION WARNING: getSupabaseClient() is deprecated. Use getSupabaseServerClient() or helper functions. This call is being redirected.",
+  )
+  return getSupabaseServerClient()
+}
+
 export async function saveContact(contactData: ContactData) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase.from("contacts").insert([contactData]).select().single()
@@ -108,13 +111,12 @@ export async function saveQuoteRequest(quoteData: QuoteRequestData) {
 
 export async function logEmail(emailData: EmailLogData) {
   const supabase = getSupabaseServerClient()
-  // Ensure the object keys match the column names exactly, especially resend_email_id
   const payload = {
     email_type: emailData.email_type,
     recipient_email: emailData.recipient_email,
     subject: emailData.subject,
     status: emailData.status,
-    resend_email_id: emailData.resend_email_id, // Ensure this matches the interface and table
+    resend_email_id: emailData.resend_email_id,
     related_contact_id: emailData.related_contact_id,
     related_call_id: emailData.related_call_id,
     related_quote_id: emailData.related_quote_id,
@@ -125,8 +127,6 @@ export async function logEmail(emailData: EmailLogData) {
   return { data, error, success: !error }
 }
 
-// --- Admin data fetching functions ---
-// These also need to use the server client to bypass RLS
 export async function getContacts(limit = 100, offset = 0) {
   const supabase = getSupabaseServerClient()
   const { data, error, count } = await supabase

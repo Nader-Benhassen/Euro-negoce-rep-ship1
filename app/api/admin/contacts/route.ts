@@ -1,20 +1,42 @@
 import { NextResponse } from "next/server"
+import { getContacts } from "@/lib/database" // Correct: only imports what's needed
 
-import { getContacts, getSupabaseServerClient } from "@/lib/database"
+export const dynamic = "force-dynamic"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const supabase = getSupabaseServerClient()
-    const { data: contacts, error } = await getContacts(supabase)
+    const url = new URL(request.url)
+    const limit = Number.parseInt(url.searchParams.get("limit") || "100")
+    const offset = Number.parseInt(url.searchParams.get("offset") || "0")
+    // const status = url.searchParams.get("status") || undefined; // Example if you add status filter to getContacts
 
-    if (error) {
-      console.error("Error fetching contacts:", error)
-      return NextResponse.json({ error: "Failed to fetch contacts" }, { status: 500 })
+    const result = await getContacts(limit, offset) // This function uses getSupabaseServerClient internally
+
+    if (!result.success) {
+      console.error("Error fetching contacts from database:", result.error)
+      return NextResponse.json(
+        { success: false, error: result.error?.message || "Failed to fetch contacts" },
+        { status: 500 },
+      )
     }
 
-    return NextResponse.json(contacts)
+    return NextResponse.json({
+      success: true,
+      data: result.data,
+      pagination: {
+        limit,
+        offset,
+        total: result.count || 0,
+      },
+    })
   } catch (error) {
-    console.error("Unexpected error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error in /api/admin/contacts route:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error fetching contacts",
+      },
+      { status: 500 },
+    )
   }
 }

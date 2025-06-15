@@ -57,7 +57,6 @@
     "react-hook-form": "^7.54.1",
     "react-resizable-panels": "^2.1.7",
     "recharts": "2.15.0",
-    "resend": "latest",
     "sib-api-v3-sdk": "latest",
     "sonner": "^1.7.1",
     "svelte": "latest",

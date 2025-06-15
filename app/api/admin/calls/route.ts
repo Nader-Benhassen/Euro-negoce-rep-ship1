@@ -1,14 +1,41 @@
 import { NextResponse } from "next/server"
+import { getScheduledCalls } from "@/lib/database" // Correct: only imports what's needed
 
-import { getScheduledCalls } from "@/lib/database"
+export const dynamic = "force-dynamic"
 
 export async function GET(request: Request) {
   try {
-    const scheduledCalls = await getScheduledCalls()
+    const url = new URL(request.url)
+    const limit = Number.parseInt(url.searchParams.get("limit") || "100")
+    const offset = Number.parseInt(url.searchParams.get("offset") || "0")
 
-    return NextResponse.json({ scheduledCalls }, { status: 200 })
+    const result = await getScheduledCalls(limit, offset) // This function uses getSupabaseServerClient internally
+
+    if (!result.success) {
+      console.error("Error fetching scheduled calls from database:", result.error)
+      return NextResponse.json(
+        { success: false, error: result.error?.message || "Failed to fetch scheduled calls" },
+        { status: 500 },
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: result.data,
+      pagination: {
+        limit,
+        offset,
+        total: result.count || 0,
+      },
+    })
   } catch (error) {
-    console.error("Error fetching scheduled calls:", error)
-    return NextResponse.json({ error: "Failed to fetch scheduled calls" }, { status: 500 })
+    console.error("Error in /api/admin/calls route:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error fetching scheduled calls",
+      },
+      { status: 500 },
+    )
   }
 }

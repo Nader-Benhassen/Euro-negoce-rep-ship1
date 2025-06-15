@@ -1,27 +1,42 @@
 import { NextResponse } from "next/server"
+import { getEmailLogs } from "@/lib/database" // Correct: only imports what's needed
 
-import { getEmailLogs, getSupabaseServerClient } from "@/lib/database"
+export const dynamic = "force-dynamic"
 
 export async function GET(request: Request) {
   try {
-    const supabase = getSupabaseServerClient()
+    const url = new URL(request.url)
+    const limit = Number.parseInt(url.searchParams.get("limit") || "100")
+    const offset = Number.parseInt(url.searchParams.get("offset") || "0")
+    // const emailType = url.searchParams.get("type") || undefined; // Example if you add type filter
 
-    const { data: user, error: userError } = await supabase.auth.getUser()
+    const result = await getEmailLogs(limit, offset) // This function uses getSupabaseServerClient internally
 
-    if (userError) {
-      console.error("Error getting user:", userError)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    if (!result.success) {
+      console.error("Error fetching email logs from database:", result.error)
+      return NextResponse.json(
+        { success: false, error: result.error?.message || "Failed to fetch email logs" },
+        { status: 500 },
+      )
     }
 
-    if (!user?.user?.app_metadata?.roles?.includes("admin")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const emailLogs = await getEmailLogs()
-
-    return NextResponse.json(emailLogs)
+    return NextResponse.json({
+      success: true,
+      data: result.data,
+      pagination: {
+        limit,
+        offset,
+        total: result.count || 0,
+      },
+    })
   } catch (error) {
-    console.error("Error fetching email logs:", error)
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
+    console.error("Error in /api/admin/emails route:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error fetching email logs",
+      },
+      { status: 500 },
+    )
   }
 }
