@@ -1,55 +1,45 @@
 import { NextResponse } from "next/server"
-import { sendBrevoEmailFetch } from "@/lib/brevo-fetch"
-import { saveContact, logEmail } from "@/lib/database"
+import { z } from "zod"
+import { saveQuoteRequest, logEmail } from "@/lib/database"
 
-export const dynamic = "force-dynamic"
+const schema = z.object({
+  name: z.string().min(3),
+  email: z.string().email(),
+  phone: z.string().min(10),
+  company: z.string().optional(),
+  message: z.string().min(10),
+})
 
 export async function POST(request: Request) {
   try {
-    const formData = await request.json()
-    const { name, email, company, phone, message, selected_product } = formData
+    const body = await request.json()
+    const validation = schema.safeParse(body)
 
-    // 1. Save to database
-    const { data: contactData, error: dbError } = await saveContact({
-      name,
-      email,
-      company,
-      phone,
-      message,
-      selected_product,
-    })
-    if (dbError) {
-      throw new Error(`Database error: ${dbError.message}`)
+    if (!validation.success) {
+      return NextResponse.json(validation.error.issues, { status: 400 })
     }
 
-    // 2. Send email via Brevo
-    const subject = `New Quote Request for ${selected_product} from ${name}`
-    const htmlContent = `<p>Name: ${name}</p><p>Email: ${email}</p><p>Company: ${company}</p><p>Phone: ${phone}</p><p>Product: ${selected_product}</p><p>Message: ${message}</p>`
-    const emailResult = await sendBrevoEmailFetch({
-      to: "contact@euronegocetrade.com",
-      subject,
-      htmlContent,
-      replyTo: email,
-    })
+    const { name, email, phone, company, message } = validation.data
 
-    // 3. Log email status
+    // Save to database
+    await saveQuoteRequest({ name, email, phone, company, message })
+
+    // Log email
     await logEmail({
-      email_type: "quote_request",
-      recipient_email: "contact@euronegocetrade.com",
-      subject,
-      status: emailResult.success ? "sent" : "failed",
-      brevo_email_id: emailResult.data?.id || null,
-      related_contact_id: contactData?.id,
+      to: process.env.EMAIL_TO_ADDRESS || "",
+      subject: "New Quote Request",
+      body: `
+        Name: ${name}
+        Email: ${email}
+        Phone: ${phone}
+        Company: ${company || "N/A"}
+        Message: ${message}
+      `,
     })
 
-    if (!emailResult.success) {
-      console.error("Failed to send quote request email via Brevo:", emailResult.error)
-      return NextResponse.json({ message: "Quote request submitted, but notification email failed." }, { status: 200 })
-    }
-
-    return NextResponse.json({ message: "Quote request submitted successfully!" })
+    return NextResponse.json({ message: "Quote request sent successfully" }, { status: 200 })
   } catch (error) {
-    console.error("Error handling quote request:", error)
-    return NextResponse.json({ error: "Failed to process quote request." }, { status: 500 })
+    console.error("Error sending quote request:", error)
+    return NextResponse.json({ message: "Failed to send quote request" }, { status: 500 })
   }
 }
