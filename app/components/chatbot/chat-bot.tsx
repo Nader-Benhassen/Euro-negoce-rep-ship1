@@ -762,7 +762,7 @@ What specific information would you like to know?`,
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-[420px] h-[650px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden transition-all duration-500">
+    <div className="fixed inset-0 md:inset-auto md:bottom-6 md:right-6 w-full h-full md:w-[420px] md:h-[650px] bg-white md:rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden transition-all duration-500">
       {/* Header */}
       <div className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-600 text-white p-5 flex items-center justify-between">
         <div className="flex items-center space-x-4">
