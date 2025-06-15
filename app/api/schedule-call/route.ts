@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic"
 
 export async function POST(request: Request) {
   console.log("📞 SCHED_CALL: Received schedule call request")
-  let callIdForLog: number | null = null
+  let callIdForLog: string | null = null // UUIDs are strings
   let dbSaveSuccessful = false
   let dbErrorMessage: string | null = null
 
@@ -14,7 +14,6 @@ export async function POST(request: Request) {
     const formData = await request.json()
     const { name, email, company, phone, preferred_date, preferred_time, timezone, message } = formData
 
-    // Validate essential data for the email itself
     if (!name || !email || !preferred_date || !preferred_time || !timezone) {
       console.error("📞 SCHED_CALL: Missing required fields for scheduling a call and sending notification:", {
         nameExists: !!name,
@@ -30,13 +29,12 @@ export async function POST(request: Request) {
     }
     console.log("📞 SCHED_CALL: Form data received:", { name, email, preferred_date })
 
-    // 1. Attempt to save to database
     console.log("📞 SCHED_CALL: Attempting to save call to database...")
     try {
       const {
         data: callData,
         error: dbError,
-        success: dbSuccessOp, // Renamed to avoid conflict
+        success: dbSuccessOp,
       } = await saveScheduledCall({
         name,
         email,
@@ -55,16 +53,12 @@ export async function POST(request: Request) {
       } else {
         dbErrorMessage = dbError?.message || "Unknown DB error during saveScheduledCall"
         console.error("📞 SCHED_CALL: Database error saving scheduled call:", dbErrorMessage)
-        // Proceed to attempt email sending; callIdForLog will remain null if ID wasn't obtained
       }
     } catch (dbCatchError: any) {
       dbErrorMessage = dbCatchError.message || "Exception during saveScheduledCall"
       console.error("📞 SCHED_CALL: Exception occurred while saving scheduled call:", dbErrorMessage)
-      // Proceed to attempt email sending; callIdForLog will remain null
     }
 
-    // 2. Send email via Brevo
-    // This section will be attempted regardless of DB save outcome, as long as essential email data is present.
     const subject = `New Call Scheduled: ${name} - ${preferred_date}`
     const htmlContent = `
       <h2>New Call Scheduled</h2>
@@ -78,7 +72,7 @@ export async function POST(request: Request) {
       <p><strong>Message:</strong></p>
       <p>${message || "N/A"}</p>
     `
-    const recipientEmail = "contact@euronegocetrade.com" // Your notification email
+    const recipientEmail = "contact@euronegocetrade.com"
 
     console.log(
       `📞 SCHED_CALL: Attempting to send schedule call notification to ${recipientEmail} for user ${name} (${email})`,
@@ -87,53 +81,44 @@ export async function POST(request: Request) {
       to: recipientEmail,
       subject,
       htmlContent,
-      replyTo: email, // User's email as replyTo
+      replyTo: email,
     })
     console.log("📞 SCHED_CALL: Brevo email send attempt result:", emailResult)
 
-    // 3. Log email attempt status
     console.log("📞 SCHED_CALL: Logging email attempt status to database...")
     const emailLogStatusToSave = emailResult.success ? "sent" : "failed"
-    const brevoEmailId = emailResult.data?.id || null
+    const brevoMessageId = emailResult.data?.id || null // Brevo's ID
 
     const dbLogEmailOp = await logEmail({
       email_type: "schedule_call_notification",
       recipient_email: recipientEmail,
       subject,
       status: emailLogStatusToSave,
-      brevo_email_id: brevoEmailId,
-      related_call_id: callIdForLog, // This will be null if DB save for the call failed or didn't yield an ID
+      resend_email_id: brevoMessageId, // Changed from brevo_email_id
+      related_call_id: callIdForLog,
+      error_message: emailResult.success ? null : emailResult.error,
     })
     console.log("📞 SCHED_CALL: Email log database operation status:", dbLogEmailOp)
     if (!dbLogEmailOp.success) {
-      console.error(
-        "📞 SCHED_CALL: Failed to log email status to database. Error:",
-        dbLogEmailOp.error?.message,
-        "Email send success was:",
-        emailResult.success,
-      )
-      // This is a secondary failure; the client response will primarily depend on emailResult.success
+      console.error("📞 SCHED_CALL: Failed to log email status to database. Error:", dbLogEmailOp.error?.message)
     }
 
-    // 4. Determine overall response based on email sending success and DB save success
     if (!emailResult.success) {
       console.error("📞 SCHED_CALL: Notification email FAILED. Brevo error:", emailResult.error)
       const responseMessage = dbSaveSuccessful
         ? "Call details saved, but notification email failed. We will contact you."
         : `Failed to save call details (DB Error: ${dbErrorMessage}) AND notification email failed (Email Error: ${emailResult.error}). Please try again or contact support.`
-      const responseStatus = dbSaveSuccessful ? 207 : 500 // 207 Multi-Status if DB ok, email fail
+      const responseStatus = dbSaveSuccessful ? 207 : 500
       return NextResponse.json(
         { message: responseMessage, callId: callIdForLog, emailSent: false, dbSaved: dbSaveSuccessful },
         { status: responseStatus },
       )
     }
 
-    // Email sending was SUCCESSFUL
     if (!dbSaveSuccessful) {
       console.warn(
         `📞 SCHED_CALL: Notification email SENT, but failed to save call details to DB. DB Error: ${dbErrorMessage}`,
       )
-      // Inform user that their request was received (email sent) but not fully saved.
       return NextResponse.json(
         {
           message:
@@ -142,11 +127,10 @@ export async function POST(request: Request) {
           emailSent: true,
           dbSaved: false,
         },
-        { status: 207 }, // 207 Multi-Status
+        { status: 207 },
       )
     }
 
-    // Both DB save for the call AND email send were successful
     console.log("📞 SCHED_CALL: Call scheduled successfully and notification sent!")
     return NextResponse.json({
       message: "Call scheduled successfully!",
