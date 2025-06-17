@@ -259,7 +259,6 @@ export default function ContactModal({ isOpen, onClose, preSelectedProduct = nul
                             <div className="flex items-center justify-between">
                               <div>
                                 <h5 className="font-medium">{product.name}</h5>
-                                <p className="text-sm text-gray-600">{product.price}</p>
                               </div>
                               <div
                                 className={`w-5 h-5 rounded-full border-2 ${
